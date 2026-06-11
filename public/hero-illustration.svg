@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <!-- Background circles -->
+  <circle cx="400" cy="300" r="250" fill="#FFF5F0" opacity="0.5"/>
+  <circle cx="400" cy="300" r="180" fill="#FFE8DB" opacity="0.3"/>
+  
+  <!-- Laptop -->
+  <rect x="200" y="250" width="400" height="250" rx="10" fill="#374151"/>
+  <rect x="210" y="260" width="380" height="210" rx="5" fill="#1F2937"/>
+  
+  <!-- Screen content - Code lines -->
+  <rect x="230" y="280" width="120" height="8" rx="4" fill="#FF6B35" opacity="0.8"/>
+  <rect x="230" y="300" width="200" height="8" rx="4" fill="#10B981" opacity="0.6"/>
+  <rect x="230" y="320" width="160" height="8" rx="4" fill="#3B82F6" opacity="0.6"/>
+  <rect x="230" y="340" width="180" height="8" rx="4" fill="#FF6B35" opacity="0.5"/>
+  <rect x="230" y="360" width="140" height="8" rx="4" fill="#10B981" opacity="0.5"/>
+  
+  <!-- Floating elements -->
+  <circle cx="150" cy="200" r="30" fill="#FF6B35" opacity="0.2"/>
+  <circle cx="650" cy="180" r="40" fill="#3B82F6" opacity="0.2"/>
+  <circle cx="680" cy="400" r="35" fill="#10B981" opacity="0.2"/>
+  
+  <!-- Code brackets -->
+  <text x="500" y="320" font-family="monospace" font-size="60" fill="#FF6B35" opacity="0.3">&lt;/&gt;</text>
+  
+  <!-- Gear icon -->
+  <circle cx="120" cy="450" r="25" fill="none" stroke="#FF6B35" stroke-width="3" opacity="0.4"/>
+  <circle cx="120" cy="450" r="15" fill="none" stroke="#FF6B35" stroke-width="3" opacity="0.4"/>
+  
+  <!-- Cloud icon -->
+  <ellipse cx="700" cy="120" rx="40" ry="25" fill="#3B82F6" opacity="0.3"/>
+  <ellipse cx="670" cy="130" rx="30" ry="20" fill="#3B82F6" opacity="0.3"/>
+  <ellipse cx="720" cy="130" rx="25" ry="18" fill="#3B82F6" opacity="0.3"/>
+</svg>

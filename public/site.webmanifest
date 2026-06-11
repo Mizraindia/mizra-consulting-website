@@ -1,0 +1,22 @@
+{
+  "name": "Mizra Consulting",
+  "short_name": "Mizra",
+  "description": "Product-Led Growth & Digital Solutions",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#131B26",
+  "theme_color": "#EE5C1F",
+  "icons": [
+    {
+      "src": "/mizra-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ]
+} 
