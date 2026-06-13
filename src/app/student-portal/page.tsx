@@ -77,7 +77,7 @@ const handleEnrollmentSubmit = async (
   return (
     <main className="min-h-screen pt-20">
 
-      <section className="py-20 bg-orange-50">
+      <section id="demo-form" className="py-20 bg-orange-50">
   <div className="container-custom max-w-3xl">
 
      {!demoSuccess ? (
@@ -554,11 +554,23 @@ const handleEnrollmentSubmit = async (
 
     <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
 
-      <button className="bg-white text-primary-500 px-8 py-4 rounded-lg font-semibold">
+      <button
+      onClick={() =>
+               document
+                .getElementById('enrollment')
+                ?.scrollIntoView({ behavior: 'smooth' })
+                }
+       className="bg-white text-primary-500 px-8 py-4 rounded-lg font-semibold">
         Enroll Now
       </button>
 
-      <button className="border border-white px-8 py-4 rounded-lg font-semibold">
+      <button
+      onClick={() =>
+               document
+                .getElementById('demo-form')
+                ?.scrollIntoView({ behavior: 'smooth' })
+                } 
+      className="border border-white px-8 py-4 rounded-lg font-semibold">
         Book Demo Call
       </button>
 
