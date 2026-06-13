@@ -8,7 +8,7 @@ export default function StudentPortalPage() {
 const [enrollSuccess, setEnrollSuccess] = useState(false);
 
 const GOOGLE_SCRIPT_URL =
-'https://script.google.com/macros/s/AKfycbyjNgfSEKRhFL_9X0NInT8BmFUixvcyLehLgZ_v1xVfVIiEPtqT2qyCiprWsPkLeNdf/exec';
+'https://script.google.com/macros/s/AKfycbxHELE4yy3Wasq8KmWV-VTWk1O8bNQtEZBZXZcz7b2fLkmvvAME_mg3jMklFFCtUccx/exec';
 
 const handleDemoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
@@ -71,7 +71,6 @@ const handleEnrollmentSubmit = async (
    '_blank'
  );
   
-
   setEnrollSuccess(true);
   // e.currentTarget.reset();
 };
@@ -103,6 +102,7 @@ const handleEnrollmentSubmit = async (
         type="text"
         placeholder="Full Name"
         className="w-full p-4 border rounded-lg"
+        required
       />
 
       <input
@@ -110,6 +110,7 @@ const handleEnrollmentSubmit = async (
         type="email"
         placeholder="Email Address"
         className="w-full p-4 border rounded-lg"
+        required
       />
       
       <input
@@ -117,6 +118,7 @@ const handleEnrollmentSubmit = async (
         type="tel"
         placeholder="Phone Number"
         className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
        />
       <input
         name="college"
@@ -390,6 +392,7 @@ const handleEnrollmentSubmit = async (
         type="text"
         placeholder="Full Name"
         className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
       />
 
       <input
@@ -397,13 +400,18 @@ const handleEnrollmentSubmit = async (
         type="email"
         placeholder="Email Address"
         className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
+        
       />
+
 
       <input
         name="phone"
         type="tel"
         placeholder="Phone Number"
         className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
+
       />
 
       <input
@@ -411,6 +419,8 @@ const handleEnrollmentSubmit = async (
         type="text"
         placeholder="College Name"
         className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
+
       />
 
       <input
@@ -418,6 +428,8 @@ const handleEnrollmentSubmit = async (
         type="text"
         placeholder="Passing Year"
         className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
+
       />
 
       <input
@@ -425,6 +437,8 @@ const handleEnrollmentSubmit = async (
         type="text"
         placeholder="Current Course / Degree"
         className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
+
       />
 
       <input
@@ -432,6 +446,8 @@ const handleEnrollmentSubmit = async (
         type="text"
         placeholder="Target Job Role"
         className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
+
       />
 
       <input
@@ -439,6 +455,8 @@ const handleEnrollmentSubmit = async (
         type="url"
         placeholder="LinkedIn Profile (Optional)"
         className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
+
       />
 
       <button
