@@ -455,7 +455,7 @@ const handleEnrollmentSubmit = async (
         type="url"
         placeholder="LinkedIn Profile (Optional)"
         className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-        required
+        
 
       />
 
