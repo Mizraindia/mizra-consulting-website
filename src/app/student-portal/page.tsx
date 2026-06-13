@@ -65,10 +65,11 @@ const handleEnrollmentSubmit = async (
   },
   body: JSON.stringify(payload),
 });
-// window.open(
-//   'PASTE_YOUR_RAZORPAY_LINK_HERE',
-//   '_blank'
-// );
+
+ window.open(
+   'https://rzp.io/rzp/WGSNPrpM',
+   '_blank'
+ );
   
 
   setEnrollSuccess(true);
