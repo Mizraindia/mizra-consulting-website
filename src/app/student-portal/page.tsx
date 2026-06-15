@@ -77,12 +77,12 @@ const handleEnrollmentSubmit = async (
   return (
     <main className="min-h-screen pt-20">
 
-      <section id="demo-form" className="py-20 bg-orange-50">
+      <section id="demo-form" className="py-12 bg-orange-50">
   <div className="container-custom max-w-3xl">
 
      {!demoSuccess ? (
   <>
-    <div className="text-center mb-10">
+    <div className="text-center mb-6">
       <h2 className="text-4xl font-bold">
         Book a Free Demo Call
       </h2>
@@ -93,7 +93,7 @@ const handleEnrollmentSubmit = async (
     </div>
     
        <form
-        className="space-y-6"
+        className="space-y-4"
         onSubmit={handleDemoSubmit}
        >
 
@@ -101,7 +101,7 @@ const handleEnrollmentSubmit = async (
         name="name"
         type="text"
         placeholder="Full Name"
-        className="w-full p-4 border rounded-lg"
+        className="w-full p-3 border rounded-lg"
         required
       />
 
@@ -109,7 +109,7 @@ const handleEnrollmentSubmit = async (
         name="email"
         type="email"
         placeholder="Email Address"
-        className="w-full p-4 border rounded-lg"
+        className="w-full p-3 border rounded-lg"
         required
       />
       
@@ -117,21 +117,21 @@ const handleEnrollmentSubmit = async (
         name="phone"
         type="tel"
         placeholder="Phone Number"
-        className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         required
        />
       <input
         name="college"
         type="text"
         placeholder="College Name"
-        className="w-full p-4 border rounded-lg"
+        className="w-full p-3 border rounded-lg"
       />
 
       <input
         name="passingYear"
         type="text"
         placeholder="Passing Year"
-        className="w-full p-4 border rounded-lg"
+        className="w-full p-3 border rounded-lg"
       />
 
       <button
@@ -182,7 +182,10 @@ const handleEnrollmentSubmit = async (
             </h1>
 
             <p className="mt-8 text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto">
-              Build. Refine. Excel. Master the resumes, LinkedIn strategies,
+              <span className="block text-3xl md:text-4xl font-extrabold text-primary-500 mb-3">
+  Build. Refine. Excel.
+</span>
+              Master the resumes, LinkedIn strategies,
               and interview tactics that top recruiters actually look for.
             </p>
 
