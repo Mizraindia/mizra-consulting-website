@@ -8,7 +8,7 @@ export default function StudentPortalPage() {
 const [enrollSuccess, setEnrollSuccess] = useState(false);
 
 const GOOGLE_SCRIPT_URL =
-'https://script.google.com/macros/s/AKfycbxHELE4yy3Wasq8KmWV-VTWk1O8bNQtEZBZXZcz7b2fLkmvvAME_mg3jMklFFCtUccx/exec';
+'https://script.google.com/macros/s/AKfycbxprVV2yPvLVjJRhr5vzemvsbnSGNlL2356oG7GZXHHieplKys4AGuI1JOWjUWCpgGL/exec';
 
 const handleDemoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
@@ -67,7 +67,7 @@ const handleEnrollmentSubmit = async (
 });
 
  window.open(
-   'https://rzp.io/rzp/WGSNPrpM',
+   'https://rzp.io/rzp/n5s19ZjM',
    '_blank'
  );
   
