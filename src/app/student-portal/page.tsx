@@ -1,14 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function StudentPortalPage() {
 
   const [demoSuccess, setDemoSuccess] = useState(false);
 const [enrollSuccess, setEnrollSuccess] = useState(false);
+const [paymentSuccess, setPaymentSuccess] = useState(false);
+
 
 const GOOGLE_SCRIPT_URL =
 'https://script.google.com/macros/s/AKfycbxprVV2yPvLVjJRhr5vzemvsbnSGNlL2356oG7GZXHHieplKys4AGuI1JOWjUWCpgGL/exec';
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get('payment') === 'success') {
+    setPaymentSuccess(true);
+  }
+}, []);
 
 const handleDemoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
@@ -75,6 +85,28 @@ const handleEnrollmentSubmit = async (
   // e.currentTarget.reset();
 };
   return (
+      <>
+    {paymentSuccess && (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white p-8 rounded-xl max-w-md text-center">
+          <h2 className="text-2xl font-bold text-green-600">
+            Payment Successful
+          </h2>
+
+          <p className="mt-4">
+            Thank you for enrolling.
+          </p>
+
+          <button
+            onClick={() => setPaymentSuccess(false)}
+            className="btn-primary mt-6"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )}
+
     <main className="min-h-screen pt-20">
 
       <section id="demo-form" className="py-12 bg-orange-50">
@@ -199,7 +231,7 @@ const handleEnrollmentSubmit = async (
                 }
                  className="btn-primary px-8 py-4 text-lg"
                  >
-                 Enroll Now – ₹2,000
+                 Enroll Now – ₹4,000
               </button>
 
               <button
@@ -466,7 +498,7 @@ const handleEnrollmentSubmit = async (
         type="submit"
         className="btn-primary w-full py-4"
       >
-        Enroll Now – ₹2,000
+        Enroll Now – ₹4,000
       </button>
 
       {enrollSuccess && (
@@ -583,5 +615,6 @@ const handleEnrollmentSubmit = async (
 </section>
 
     </main>
+    </>
   );
 }
