@@ -67,7 +67,7 @@ const handleEnrollmentSubmit = async (
 });
 
  window.open(
-   'https://rzp.io/rzp/n5s19ZjM',
+   'https://rzp.io/rzp/HC7uBRBW',
    '_blank'
  );
   
