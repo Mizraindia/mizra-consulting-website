@@ -498,7 +498,7 @@ const handleEnrollmentSubmit = async (
         type="submit"
         className="btn-primary w-full py-4"
       >
-        Enroll Now – ₹4,000
+        Enroll Now
       </button>
 
       {enrollSuccess && (
