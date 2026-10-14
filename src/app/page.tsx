@@ -133,7 +133,7 @@ export default function HomePage() {
                     Start Your Project Today
                   </h2>
                   <p className="text-gray-600">
-                    Get a free consultation in 3 simple steps
+                    Tell us what you need. We reply within 4 business hours.
                   </p>
                 </div>
                 <ContactForm />

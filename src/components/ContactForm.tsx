@@ -1,289 +1,185 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
+import {
+  FieldError,
+  HoneypotField,
+  inputClass,
+  submitLead,
+  useBotCheck,
+  useHydrated,
+} from './LeadFormParts';
 
-type FormStep = 1 | 2 | 3;
-
-interface FormData {
-  phone: string;
+interface FormFields {
   name: string;
   email: string;
+  message: string;
 }
 
+const EMPTY: FormFields = { name: '', email: '', message: '' };
+
 export default function ContactForm() {
-  const [step, setStep] = useState<FormStep>(1);
-  const [loading, setLoading] = useState(false);
+  const [fields, setFields] = useState<FormFields>(EMPTY);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
-  const [formData, setFormData] = useState<FormData>({
-    phone: '',
-    name: '',
-    email: '',
-  });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [startedAt, setStartedAt] = useState(() => Date.now());
+  const successHeading = useRef<HTMLHeadingElement>(null);
+  const botCheck = useBotCheck();
+  const hydrated = useHydrated();
 
-  const saveToGoogleSheets = async (data: Partial<FormData>) => {
-    try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          ...data,
-          timestamp: new Date().toISOString(),
-          step,
-        }),
-      });
+  useEffect(() => {
+    if (sent) successHeading.current?.focus();
+  }, [sent]);
 
-      if (!response.ok) {
-        throw new Error('Failed to save data');
-      }
+  const update = (key: keyof FormFields) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => setFields({ ...fields, [key]: e.target.value });
 
-      return true;
-    } catch (err) {
-      console.error('Error saving to Google Sheets:', err);
-      throw err;
-    }
-  };
-
-  const handleStep1Submit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    setFieldErrors({});
+    setSending(true);
 
-    try {
-      // Validate phone number
-      const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/;
-      if (!phoneRegex.test(formData.phone)) {
-        setError('Please enter a valid phone number');
-        setLoading(false);
-        return;
-      }
+    const outcome = await submitLead(e.currentTarget, {
+      kind: 'enquiry',
+      ...fields,
+      startedAt,
+      botCheckToken: botCheck.token,
+    });
 
-      await saveToGoogleSheets({ phone: formData.phone });
-      setStep(2);
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
+    setSending(false);
+    if (outcome.status === 'ok') {
+      setSent(true);
+      return;
     }
+    if (outcome.status === 'invalid') setFieldErrors(outcome.fields);
+    else setError(outcome.message);
+    botCheck.reset();
   };
 
-  const handleStep2Submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      // Validate email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        setError('Please enter a valid email address');
-        setLoading(false);
-        return;
-      }
-
-      if (formData.name.trim().length < 2) {
-        setError('Please enter your full name');
-        setLoading(false);
-        return;
-      }
-
-      await saveToGoogleSheets({ name: formData.name, email: formData.email });
-      setStep(3);
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const startAgain = () => {
+    setFields(EMPTY);
+    setStartedAt(Date.now());
+    setSent(false);
   };
 
-  const resetForm = () => {
-    setStep(1);
-    setFormData({ phone: '', name: '', email: '' });
-    setError('');
-  };
+  if (sent) {
+    return (
+      <div className="card border text-center py-8" role="status">
+        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="w-12 h-12 text-green-500" aria-hidden="true" />
+        </div>
+        <h3 ref={successHeading} tabIndex={-1} className="text-2xl font-bold text-gray-900 mb-3 outline-none">
+          Thanks, we have it.
+        </h3>
+        <p className="text-gray-600 mb-8">
+          A real person will reply to {fields.email} within 4 business hours (Monday to Friday,
+          India time).
+        </p>
+        <button type="button" onClick={startAgain} className="btn-secondary">
+          Send another message
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="card border">
-      {/* Progress Indicator */}
-      <div className="flex items-center justify-between mb-8">
-        {[1, 2, 3].map((s) => (
-          <div key={s} className={`flex items-center ${s < 3 ? 'flex-1' : ''}`}>
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${s <= step
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-gray-200 text-gray-500'
-                }`}
-            >
-              {s < step ? <CheckCircle className="w-6 h-6" /> : s}
-            </div>
-            {s < 3 && (
-              <div
-                className={`flex-1 h-1 mx-2 transition-colors ${s < step ? 'bg-primary-500' : 'bg-gray-200'
-                  }`}
-              />
-            )}
-          </div>
-        ))}
+    <form method="post" onSubmit={handleSubmit} noValidate className="card border space-y-5 relative">
+      <HoneypotField />
+
+      <div>
+        <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 mb-2">
+          Your name
+        </label>
+        <input
+          id="contact-name"
+          name="name"
+          type="text"
+          autoComplete="name"
+          value={fields.name}
+          onChange={update('name')}
+          required
+          maxLength={80}
+          aria-invalid={Boolean(fieldErrors.name)}
+          aria-describedby={fieldErrors.name ? 'contact-name-error' : undefined}
+          className={inputClass}
+        />
+        <FieldError id="contact-name-error" message={fieldErrors.name} />
       </div>
 
-      {/* Step 1: Phone Number */}
-      {step === 1 && (
-        <form onSubmit={handleStep1Submit} className="space-y-6">
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              Let&apos;s Get Started
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Enter your phone number and we&apos;ll get back to you shortly.
-            </p>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-              Phone Number *
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="+1 (555) 000-0000"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-              required
-              disabled={loading}
-            />
-          </div>
-          {error && (
-            <div className="text-red-600 text-sm bg-red-50 px-4 py-2 rounded-lg">
-              {error}
-            </div>
-          )}
-          <button
-            type="submit"
-            disabled={loading || !formData.phone}
-            className="btn-primary w-full flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Processing...</span>
-              </>
-            ) : (
-              <>
-                <span>Continue</span>
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
-        </form>
-      )}
+      <div>
+        <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-2">
+          Email
+        </label>
+        <input
+          id="contact-email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={fields.email}
+          onChange={update('email')}
+          required
+          maxLength={254}
+          aria-invalid={Boolean(fieldErrors.email)}
+          aria-describedby={fieldErrors.email ? 'contact-email-error' : undefined}
+          className={inputClass}
+        />
+        <FieldError id="contact-email-error" message={fieldErrors.email} />
+      </div>
 
-      {/* Step 2: Name and Email */}
-      {step === 2 && (
-        <form onSubmit={handleStep2Submit} className="space-y-6">
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              Almost There!
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Please provide your name and email address.
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="John Doe"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="john@example.com"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                  required
-                  disabled={loading}
-                />
-              </div>
-            </div>
-          </div>
-          {error && (
-            <div className="text-red-600 text-sm bg-red-50 px-4 py-2 rounded-lg">
-              {error}
-            </div>
-          )}
-          <div className="flex space-x-4">
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="btn-secondary flex-1"
-              disabled={loading}
-            >
-              Back
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !formData.name || !formData.email}
-              className="btn-primary flex-1 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Submitting...</span>
-                </>
-              ) : (
-                <>
-                  <span>Submit</span>
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      )}
+      <div>
+        <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 mb-2">
+          What do you need?
+        </label>
+        <textarea
+          id="contact-message"
+          name="message"
+          rows={4}
+          value={fields.message}
+          onChange={update('message')}
+          required
+          maxLength={2000}
+          placeholder="For example: We want to move from HubSpot to Salesforce before March."
+          aria-invalid={Boolean(fieldErrors.message)}
+          aria-describedby={fieldErrors.message ? 'contact-message-error' : undefined}
+          className={inputClass}
+        />
+        <FieldError id="contact-message-error" message={fieldErrors.message} />
+      </div>
 
-      {/* Step 3: Success */}
-      {step === 3 && (
-        <div className="text-center py-8">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-12 h-12 text-green-500" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-3">
-            Thank You!
-          </h3>
-          <p className="text-gray-600 mb-8">
-            We&apos;ve received your information and will get back to you within 24 hours.
-          </p>
-          <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left">
-            <h4 className="font-semibold text-gray-900 mb-3">Your Details:</h4>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p><span className="font-medium">Phone:</span> {formData.phone}</p>
-              <p><span className="font-medium">Name:</span> {formData.name}</p>
-              <p><span className="font-medium">Email:</span> {formData.email}</p>
-            </div>
-          </div>
-          <button
-            onClick={resetForm}
-            className="btn-secondary"
-          >
-            Submit Another Request
-          </button>
+      {botCheck.widget}
+
+      {error && (
+        <div role="alert" className="text-red-700 text-sm bg-red-50 px-4 py-3 rounded-lg">
+          {error}
         </div>
       )}
-    </div>
+
+      <button
+        type="submit"
+        disabled={sending || !hydrated}
+        className="btn-primary w-full flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {sending ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+            <span>Sending...</span>
+          </>
+        ) : (
+          <>
+            <span>Send</span>
+            <ArrowRight className="w-5 h-5" aria-hidden="true" />
+          </>
+        )}
+      </button>
+
+      <p className="text-xs text-gray-500 text-center">
+        We use your details only to reply to you.
+      </p>
+    </form>
   );
 }

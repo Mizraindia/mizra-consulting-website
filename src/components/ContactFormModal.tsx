@@ -49,7 +49,7 @@ export default function ContactFormModal({ isOpen, onClose }: ContactFormModalPr
               Get in Touch
             </h2>
             <p className="text-gray-600">
-              Fill out the form below and we&apos;ll get back to you within 24 hours.
+              Tell us what you need. We reply within 4 business hours (Monday to Friday, India time).
             </p>
           </div>
           <ContactForm />

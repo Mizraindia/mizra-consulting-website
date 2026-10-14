@@ -1,13 +1,13 @@
 # Mizra Consulting - Professional IT Services Website
 
-A high-performance, SEO-optimized website built with Next.js 15, featuring a modern design with orange branding, comprehensive IT services showcase, and a 3-step contact form with Google Sheets integration.
+A high-performance, SEO-optimized website built with Next.js 15, featuring a modern design with orange branding, comprehensive IT services showcase, and a three-field enquiry form that saves to Google Sheets.
 
 ## 🚀 Features
 
 - **SEO-First Approach**: Comprehensive meta tags, structured data (JSON-LD), and semantic HTML
 - **High Performance**: Optimized images, code splitting, and minimal bundle size (~102KB initial load)
 - **Responsive Design**: Mobile-first design that works perfectly on all devices
-- **3-Step Contact Form**: Progressive form with instant Google Sheets integration
+- **Enquiry form**: Name, email and "What do you need?", saved to Google Sheets with an email notification
 - **Professional Theme**: Clean, sober design with orange primary color
 - **5 Core Pages**: Home, Services, About Us, Contact Us, and Blog (WordPress ready)
 - **Google Analytics**: Built-in GA4 integration
@@ -37,8 +37,8 @@ A high-performance, SEO-optimized website built with Next.js 15, featuring a mod
 # Install dependencies
 npm install
 
-# Copy environment variables
-cp .env.local.example .env.local
+# Copy environment variable names, then fill in test values
+cp .env.example .env.local
 
 # Run development server
 npm run dev
@@ -54,25 +54,37 @@ npm start
 
 ### Environment Variables
 
-Create a `.env.local` file with:
+The names are listed in `.env.example`. Real values live in Vercel
+(Project > Settings > Environment Variables), never in the code.
 
-```env
-# Google Analytics
-NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+| Name | What it is | Required |
+| --- | --- | --- |
+| `LEADS_SHEET_URL` | Web app address of the Apps Script attached to the leads sheet | Yes, or forms show an error |
+| `LEADS_SHEET_SECRET` | Shared password; same value as `SHARED_SECRET` in the script | Yes |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile invisible bot check | No (off when empty) |
+| `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_GTM_ID` | Google Analytics / Tag Manager | No |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console verification | No |
 
-# Google Tag Manager
-NEXT_PUBLIC_GTM_ID=GTM-XXXXXXX
+### How the forms work
 
-# Google Site Verification
-NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=your-verification-code
+- The enquiry form (homepage, contact page, floating button) and the master-class
+  sign-up (`/student-portal`) post to `/api/contact` on this site.
+- `/api/contact` checks the input on the server, drops bots (hidden honeypot field,
+  too-fast submissions, optional Turnstile), limits each visitor to 5 submissions per
+  10 minutes, and sends the lead to the Google Apps Script.
+- The script (`integrations/google-apps-script/leads.gs`) saves the row first, then
+  emails the owner and sends the visitor an auto-reply. The site shows "success" only
+  when the script answers `{"ok": true}`; otherwise the visitor sees an error with the
+  email address, and what they typed is kept.
+- `/api/contact/razorpay-webhook` is disabled (rejects everything) until the verified
+  master-class payment flow replaces it.
 
-# Google Sheets Webhook (for contact form)
-GOOGLE_SHEETS_WEBHOOK_URL=https://script.google.com/macros/s/YOUR_ID/exec
-```
+### Testing forms locally
 
-### Google Sheets Integration
-
-See `SETUP_GUIDE.md` for detailed instructions on setting up the Google Sheets webhook for the contact form.
+Point `LEADS_SHEET_URL` at a test copy of the sheet's script (never the live sheet),
+or at a local stand-in that answers `{"ok": true}`. Cloudflare publishes always-pass
+Turnstile test keys for local use. The development server can be slow when the
+project folder is inside OneDrive.
 
 ## 📄 Pages
 
@@ -98,7 +110,7 @@ See `SETUP_GUIDE.md` for detailed instructions on setting up the Google Sheets w
 - Statistics
 
 ### Contact Page (`/contact`)
-- 3-step progressive form
+- Three-field enquiry form
 - Contact information
 - Global presence
 - Instant Google Sheets integration
