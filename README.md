@@ -1,60 +1,27 @@
-# Mizra Consulting - Professional IT Services Website
+# Mizra Consulting website
 
-A high-performance, SEO-optimized website built with Next.js 15, featuring a modern design with orange branding, comprehensive IT services showcase, and a three-field enquiry form that saves to Google Sheets.
+The website for Mizra Consulting Pvt Ltd (mizraconsulting.com): Salesforce, Zoho,
+custom development, consulting, and master classes for students.
 
-## 🚀 Features
+Built with Next.js 15 (App Router), TypeScript and Tailwind CSS 3. Hosted on Vercel.
+Pushing a branch creates a private Vercel preview; merging to `main` publishes the live site.
+See `CHANGELOG.md` for what has changed and why.
 
-- **SEO-First Approach**: Comprehensive meta tags, structured data (JSON-LD), and semantic HTML
-- **High Performance**: Optimized images, code splitting, and minimal bundle size (~102KB initial load)
-- **Responsive Design**: Mobile-first design that works perfectly on all devices
-- **Enquiry form**: Name, email and "What do you need?", saved to Google Sheets with an email notification
-- **Professional Theme**: Clean, sober design with orange primary color
-- **5 Core Pages**: Home, Services, About Us, Contact Us, and Blog (WordPress ready)
-- **Google Analytics**: Built-in GA4 integration
-- **Accessibility**: WCAG 2.1 AA compliant
-
-## 📊 Performance Metrics
-
-- **Lighthouse Score**: 95+ (all categories)
-- **First Contentful Paint**: < 1.5s
-- **Largest Contentful Paint**: < 2.5s
-- **Time to Interactive**: < 3.5s
-- **Bundle Size**: 102KB initial load
-
-## 🛠️ Tech Stack
-
-- **Framework**: Next.js 15 (App Router)
-- **Styling**: Tailwind CSS 3
-- **Icons**: Lucide React
-- **Language**: TypeScript
-- **Fonts**: Inter (Google Fonts)
-- **Deployment**: Vercel-ready
-- **Analytics**: Google Analytics 4 & Google Tag Manager
-
-## 📦 Installation
+## Run it locally
 
 ```bash
-# Install dependencies
 npm install
-
-# Copy environment variable names, then fill in test values
-cp .env.example .env.local
-
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
+cp .env.example .env.local   # then fill in test values
+npm run dev                  # development server
+npm run lint                 # style check
+npm run build                # production build (also checks types)
 ```
 
-## 🔧 Configuration
+The development server can be slow when the project folder is inside OneDrive.
 
-### Environment Variables
+## Configuration
 
-The names are listed in `.env.example`. Real values live in Vercel
+Setting names are listed in `.env.example`. Real values live in Vercel
 (Project > Settings > Environment Variables), never in the code.
 
 | Name | What it is | Required |
@@ -62,10 +29,14 @@ The names are listed in `.env.example`. Real values live in Vercel
 | `LEADS_SHEET_URL` | Web app address of the Apps Script attached to the leads sheet | Yes, or forms show an error |
 | `LEADS_SHEET_SECRET` | Shared password; same value as `SHARED_SECRET` in the script | Yes |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile invisible bot check | No (off when empty) |
-| `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_GTM_ID` | Google Analytics / Tag Manager | No |
-| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console verification | No |
+| `NEXT_PUBLIC_GA_ID` | Google Analytics 4 measurement ID (`G-...`) | No (analytics and the consent banner are off when empty) |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Google Search Console HTML-tag code | No |
+| `NEXT_PUBLIC_BING_SITE_VERIFICATION` | Bing Webmaster Tools HTML-tag code | No |
 
-### How the forms work
+Company facts (legal name, CIN, address, email, WhatsApp, LinkedIn, the four promises)
+live in `src/lib/site.ts`. Change them there, not in each page.
+
+## How the forms work
 
 - The enquiry form (homepage, contact page, floating button) and the master-class
   sign-up (`/student-portal`) post to `/api/contact` on this site.
@@ -79,135 +50,47 @@ The names are listed in `.env.example`. Real values live in Vercel
 - `/api/contact/razorpay-webhook` is disabled (rejects everything) until the verified
   master-class payment flow replaces it.
 
-### Testing forms locally
+To test forms locally, point `LEADS_SHEET_URL` at a test copy of the sheet's script
+(never the live sheet), or at a local stand-in that answers `{"ok": true}`. Cloudflare
+publishes always-pass Turnstile test keys for local use.
 
-Point `LEADS_SHEET_URL` at a test copy of the sheet's script (never the live sheet),
-or at a local stand-in that answers `{"ok": true}`. Cloudflare publishes always-pass
-Turnstile test keys for local use. The development server can be slow when the
-project folder is inside OneDrive.
+## Analytics and consent
 
-## 📄 Pages
+- One tool: Google Analytics 4, switched on by `NEXT_PUBLIC_GA_ID`.
+- Visitors in the EU, EEA, UK and Switzerland (or whose country is unknown) see a
+  consent banner, and analytics does not load until they click Accept. Others get
+  analytics without a banner. The middleware stores the region in the `mz_region` cookie;
+  the choice is kept in the browser (`mz_analytics_consent`). "Cookie settings" in the
+  footer reopens the banner.
+- To see the banner from outside Europe, add `?test-region=consent` to a preview address.
+  This switch is ignored on the live site.
+- Events: `lead_form_view`, `lead_form_start`, `generate_lead` (each with `form_name`
+  `enquiry` or `class_interest`), `email_click`, `whatsapp_click`.
 
-### Home Page (`/`)
-- Hero section with CTA
-- Core services overview
-- Why choose us section
-- Industries served
-- Statistics showcase
-- Final CTA
+## Pages
 
-### Services Page (`/services`)
-- 6 detailed service offerings
-- Feature lists and technologies
-- Development process
-- CTA section
+| Address | Notes |
+| --- | --- |
+| `/` | Home, enquiry form, the four promises |
+| `/services` | Services |
+| `/about` | About |
+| `/contact` | Enquiry form, email, WhatsApp, registered office |
+| `/student-portal` | "Master classes are coming" holding page with sign-up |
+| `/blog` | Coming-soon placeholder |
+| `/privacy`, `/terms` | Drafts awaiting lawyer review; kept out of search results and the sitemap |
 
-### About Us Page (`/about`)
-- Company story
-- Mission and vision
-- Core values
-- Expertise showcase
-- Statistics
+Redirects (permanent): `/home` to `/`, `/industries` to `/services`, `/faq` to `/contact`.
+Every page sets its own canonical address and sharing tags through `src/lib/metadata.ts`.
+The sharing image is `public/og-image.jpg` (1200 x 630).
 
-### Contact Page (`/contact`)
-- Three-field enquiry form
-- Contact information
-- Global presence
-- Instant Google Sheets integration
+## Release and rollback
 
-### Blog Page (`/blog`)
-- Coming soon placeholder
-- WordPress integration ready
+Work happens on the `revamp` branch. A pull request into `main` is merged only after the
+owner approves the Vercel preview in writing. To undo a release, use Vercel's
+Instant Rollback, or revert the merged pull request on GitHub.
 
-## 🎨 Design System
+## Contact
 
-### Colors
-- **Primary Orange**: #FF6B35 (Mizra brand color)
-- **Secondary Gray**: #4A5568, #718096
-- **Accent Beige**: #F5F5DC, #FAF8F3
-- **Supporting**: Green (#10B981), Blue (#3B82F6)
+info@mizraconsulting.com · https://mizraconsulting.com
 
-### Typography
-- **Font Family**: Inter
-- **Weights**: 400 (regular), 500 (medium), 600 (semibold), 700 (bold)
-
-## 📱 Responsive Breakpoints
-
-- **Mobile**: < 768px
-- **Tablet**: 768px - 1024px
-- **Desktop**: > 1024px
-
-## 🔍 SEO Features
-
-- Comprehensive meta tags on all pages
-- Structured data (JSON-LD) for Organization, Services, and Contact
-- Semantic HTML5 elements
-- Optimized images with alt text
-- XML sitemap (`/sitemap.xml`)
-- Robots.txt (`/robots.txt`)
-- Open Graph and Twitter Card meta tags
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. Push code to GitHub
-2. Import repository in Vercel
-3. Add environment variables
-4. Deploy!
-
-### Other Platforms
-
-Compatible with:
-- Netlify
-- AWS Amplify
-- Digital Ocean
-- Self-hosted Node.js
-
-## 📝 Customization
-
-### Update Colors
-
-Edit `tailwind.config.ts`:
-
-```typescript
-colors: {
-  primary: {
-    500: '#FF6B35', // Your brand color
-    // ...
-  }
-}
-```
-
-### Update Content
-
-- **Home**: `src/app/page.tsx`
-- **Services**: `src/app/services/page.tsx`
-- **About**: `src/app/about/page.tsx`
-- **Contact**: `src/app/contact/page.tsx`
-
-### Update SEO
-
-Edit metadata in each page file:
-
-```typescript
-export const metadata: Metadata = {
-  title: 'Your Title',
-  description: 'Your Description',
-  // ...
-};
-```
-
-## 📞 Support
-
-- **Email**: info@mizraconsulting.com
-- **Phone**: +91 92057 10374
-- **Website**: https://mizraconsulting.com
-
-## 📄 License
-
-© 2024 Mizra Consulting. All rights reserved.
-
-## 🙏 Acknowledgments
-
-Built with modern web technologies and best practices for optimal performance and user experience.
+© Mizra Consulting Pvt Ltd. All rights reserved.

@@ -1,22 +1,14 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/metadata';
 import Link from 'next/link';
 import { Code, Cloud, Brain, Zap, Users, Cog, ArrowRight, CheckCircle } from 'lucide-react';
 import StructuredData from '@/components/StructuredData';
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
+  path: '/services',
   title: 'IT Services - Custom Software, Cloud, AI/ML Solutions',
-  description: 'Comprehensive IT consulting services including custom software development, cloud solutions, AI/ML, DevOps, digital transformation, and IT staff augmentation.',
-  keywords: [
-    'custom software development',
-    'cloud computing services',
-    'AI machine learning',
-    'DevOps consulting',
-    'digital transformation',
-    'IT staff augmentation',
-    'enterprise software',
-    'SaaS development',
-  ],
-};
+  description:
+    'Comprehensive IT consulting services including custom software development, cloud solutions, AI/ML, DevOps, digital transformation, and IT staff augmentation.',
+});
 
 const services = [
   {
@@ -239,7 +231,7 @@ export default function ServicesPage() {
               Our Development Process
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              A proven methodology that ensures quality, transparency, and timely delivery
+              A clear process for quality, transparency and on-time delivery
             </p>
           </div>
           <div className="grid md:grid-cols-5 gap-8">

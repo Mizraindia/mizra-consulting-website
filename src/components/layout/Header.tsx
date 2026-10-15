@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, Phone } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 
 const navigation = [
   { name: 'Home', href: '/' },
   { name: 'Services', href: '/services' },
-  { name: 'Student', href: '/student-portal' },
+  { name: 'Master classes', href: '/student-portal' },
   { name: 'About Us', href: '/about' },
   { name: 'Blog', href: '/blog' },
   { name: 'Contact', href: '/contact' },
@@ -64,8 +64,8 @@ export default function Header() {
               href="/contact"
               className="btn-primary flex items-center space-x-2"
             >
-              <Phone className="w-4 h-4" />
               <span>Get Started</span>
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </Link>
           </div>
 
@@ -74,6 +74,8 @@ export default function Header() {
             type="button"
             className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? (
               <X className="w-6 h-6" />
@@ -102,8 +104,8 @@ export default function Header() {
                 className="btn-primary flex items-center justify-center space-x-2 mt-4"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <Phone className="w-4 h-4" />
                 <span>Get Started</span>
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </Link>
             </div>
           </div>

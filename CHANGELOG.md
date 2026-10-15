@@ -4,6 +4,54 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Phase B: Clean-up
+
+**Client claims removed (B1)**
+- Homepage: the 100+ / 50+ / 15+ / 98% band is replaced by the four confirmed promises
+  (reply within 4 business hours; written fixed estimate within 3 working days of the call;
+  30 days of free bug fixing after launch; you own the code, data and configuration).
+- Homepage: "Trusted by 50+ enterprise clients", "24-hour response time guaranteed",
+  "Proven Track Record" and "Expert Team" replaced with confirmed facts; the
+  "Industries We Serve" section removed (it implied past clients).
+- About: the invented "founded in 2015" story and its numbers replaced with the name's
+  meaning and confirmed facts; the number cards replaced by the four promises.
+- Contact: "Proven track record" list replaced by the four promises; "Our Global
+  Presence" (India, UAE, USA offices) replaced by "Based in India, working worldwide".
+- "Leading IT consulting firm" removed from the site description, footer and
+  search-engine data; "proven methodology" reworded on Services.
+- README rewritten without unmeasured claims (Lighthouse scores, WCAG compliance, load times).
+
+**Phone numbers removed (B2)**
+- Both numbers removed from every page, the search-engine data and the README.
+- Footer and contact page now show email, WhatsApp (+91 92057 10374), the registered
+  office and the CIN. The unconfirmed Twitter link is removed. The LinkedIn link is
+  ready but hidden until a real company page exists.
+- Header "Get Started" button no longer shows a phone icon; the menu item "Student" is
+  now "Master classes".
+
+**Sitemap, broken pages and search fixes (B3)**
+- Sitemap now lists Home, Services, About, Contact, Student Portal and Blog.
+- `/industries` and `/faq` (listed before but never built) now redirect permanently to
+  `/services` and `/contact`.
+- Fixed: every page told search engines that its "real" address was the homepage
+  (canonical tag). Each page now declares its own address.
+
+**Share image (B4)**
+- New `public/og-image.jpg` (1200 x 630, stacked logo on deep violet with the four
+  services). Every page now sets its own title, description and image for sharing.
+
+**Privacy policy and terms (B5)**
+- New `/privacy` and `/terms`, drafted from the owner's workbook, marked "Draft: lawyer
+  review needed", and kept out of search results and the sitemap until reviewed.
+- Linked from the footer and from the consent line under both forms.
+- Consent banner for visitors in the EU, EEA, UK and Switzerland; analytics only loads
+  after they accept. "Cookie settings" in the footer lets them change their mind.
+
+**Analytics (B6)**
+- Google Analytics 4 only (Tag Manager removed). Off until `NEXT_PUBLIC_GA_ID` is set.
+- Events: form seen, form started, lead sent, email click, WhatsApp click.
+- Optional Bing Webmaster Tools verification tag (`NEXT_PUBLIC_BING_SITE_VERIFICATION`).
+
 ### Phase A: Stop the damage
 
 **Forms tell the truth**

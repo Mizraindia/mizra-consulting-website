@@ -1,42 +1,42 @@
-import type { Metadata } from 'next';
-import { Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { pageMetadata } from '@/lib/metadata';
+import { Mail, MessageCircle, MapPin, Clock, Linkedin } from 'lucide-react';
 import ContactForm from '@/components/ContactForm';
 import StructuredData from '@/components/StructuredData';
+import { ADDRESS_ONE_LINE, COMPANY, PROMISES, organizationData } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
+  path: '/contact',
   title: 'Contact Us - Get in Touch with Our IT Consulting Team',
-  description: 'Contact Mizra Consulting for expert IT services, custom software development, and digital transformation solutions. Schedule a free consultation today.',
-  keywords: [
-    'contact IT consulting',
-    'software development inquiry',
-    'IT services consultation',
-    'technology consulting contact',
-  ],
-};
+  description:
+    'Tell Mizra Consulting what you need: Salesforce, Zoho, custom development or consulting. We reply within 4 business hours, Monday to Friday, India time.',
+});
 
 const contactInfo = [
   {
     icon: Mail,
     title: 'Email',
-    value: 'info@mizraconsulting.com',
-    href: 'mailto:info@mizraconsulting.com',
+    value: COMPANY.email,
+    href: `mailto:${COMPANY.email}`,
   },
   {
-    icon: Phone,
-    title: 'Phone',
-    value: '+91 95603 16929',
-    href: 'tel:+919560316929',
+    icon: MessageCircle,
+    title: 'WhatsApp',
+    value: COMPANY.whatsappDisplay,
+    href: COMPANY.whatsappUrl,
   },
+  ...(COMPANY.linkedinUrl
+    ? [{ icon: Linkedin, title: 'LinkedIn', value: 'Mizra Consulting on LinkedIn', href: COMPANY.linkedinUrl }]
+    : []),
   {
     icon: MapPin,
-    title: 'Locations',
-    value: 'India | UAE | USA',
+    title: 'Registered office',
+    value: ADDRESS_ONE_LINE,
     href: null,
   },
   {
     icon: Clock,
-    title: 'Business Hours',
-    value: 'Mon-Fri: 9AM - 6PM IST',
+    title: 'Working hours',
+    value: COMPANY.hours,
     href: null,
   },
 ];
@@ -45,18 +45,7 @@ export default function ContactPage() {
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'ContactPage',
-    mainEntity: {
-      '@type': 'Organization',
-      name: 'Mizra Consulting',
-      url: 'https://mizraconsulting.com',
-      contactPoint: {
-        '@type': 'ContactPoint',
-        telephone: '+91-92057-10374',
-        contactType: 'Customer Service',
-        email: 'info@mizraconsulting.com',
-        availableLanguage: ['English'],
-      },
-    },
+    mainEntity: organizationData(),
   };
 
   return (
@@ -124,14 +113,12 @@ export default function ContactPage() {
 
               <div className="card bg-gradient-to-br from-primary-50 to-beige-50 mt-8">
                 <h3 className="font-semibold text-gray-900 mb-3">
-                  Why Choose Us?
+                  Our promises to you
                 </h3>
-                <ul className="space-y-2 text-gray-600">
-                  <li>✓ Free initial consultation</li>
-                  <li>✓ 24-hour response time</li>
-                  <li>✓ Flexible engagement models</li>
-                  <li>✓ Transparent pricing</li>
-                  <li>✓ Proven track record</li>
+                <ul className="space-y-2 text-gray-700">
+                  {PROMISES.map((promise) => (
+                    <li key={promise.value}>✓ {promise.label}</li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -140,32 +127,14 @@ export default function ContactPage() {
       </section>
 
       <section className="section-padding bg-gray-50">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Our Global Presence
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Serving clients worldwide with offices in India, UAE, and USA
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="card text-center border">
-              <div className="text-4xl mb-3">🇮🇳</div>
-              <h3 className="font-semibold text-gray-900 mb-2">India</h3>
-              <p className="text-gray-600 text-sm">Development Hub</p>
-            </div>
-            <div className="card text-center border">
-              <div className="text-4xl mb-3">🇦🇪</div>
-              <h3 className="font-semibold text-gray-900 mb-2">UAE</h3>
-              <p className="text-gray-600 text-sm">Middle East Operations</p>
-            </div>
-            <div className="card text-center border">
-              <div className="text-4xl mb-3">🇺🇸</div>
-              <h3 className="font-semibold text-gray-900 mb-2">USA</h3>
-              <p className="text-gray-600 text-sm">North America Office</p>
-            </div>
-          </div>
+        <div className="container-custom text-center max-w-3xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Based in India, working worldwide
+          </h2>
+          <p className="text-lg text-gray-600">
+            We work from Gurugram, India, with clients anywhere. Calls are booked in India mornings
+            for Europe and the Middle East, afternoons for Australia, and evenings for the US East Coast.
+          </p>
         </div>
       </section>
     </>

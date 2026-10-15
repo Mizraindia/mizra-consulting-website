@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { CLASS_TOPICS } from '@/lib/class-topics';
 import {
@@ -9,6 +10,7 @@ import {
   inputClass,
   submitLead,
   useBotCheck,
+  useFormTracking,
   useHydrated,
 } from './LeadFormParts';
 
@@ -25,6 +27,7 @@ export default function ClassInterestForm() {
   const successHeading = useRef<HTMLHeadingElement>(null);
   const botCheck = useBotCheck();
   const hydrated = useHydrated();
+  const tracking = useFormTracking('class_interest');
 
   useEffect(() => {
     if (sent) successHeading.current?.focus();
@@ -53,6 +56,7 @@ export default function ClassInterestForm() {
 
     setSending(false);
     if (outcome.status === 'ok') {
+      tracking.onSent();
       setSent(true);
       return;
     }
@@ -76,7 +80,14 @@ export default function ClassInterestForm() {
   }
 
   return (
-    <form method="post" onSubmit={handleSubmit} noValidate className="card border space-y-5 relative text-left">
+    <form
+      ref={tracking.ref}
+      method="post"
+      onSubmit={handleSubmit}
+      onFocus={tracking.onStart}
+      noValidate
+      className="card border space-y-5 relative text-left"
+    >
       <HoneypotField />
 
       <div>
@@ -180,7 +191,12 @@ export default function ClassInterestForm() {
       </button>
 
       <p className="text-xs text-gray-500 text-center">
-        We use your email only to tell you about master classes. No spam, and you can ask us to remove you at any time.
+        We use your email only to tell you about master classes. No spam, and you can ask us to
+        remove you at any time. See our{' '}
+        <Link href="/privacy" className="underline hover:text-primary-900">
+          privacy policy
+        </Link>
+        .
       </p>
     </form>
   );

@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Phone, MapPin, Linkedin, Twitter } from 'lucide-react';
+import { Mail, MessageCircle, MapPin, Linkedin } from 'lucide-react';
+import { ADDRESS_ONE_LINE, COMPANY } from '@/lib/site';
+import { CookieSettingsButton } from '@/components/Analytics';
 
 const footerLinks = {
   services: [
@@ -12,6 +14,7 @@ const footerLinks = {
   company: [
     { name: 'About Us', href: '/about' },
     { name: 'Services', href: '/services' },
+    { name: 'Master classes', href: '/student-portal' },
     { name: 'Blog', href: '/blog' },
     { name: 'Contact', href: '/contact' },
   ],
@@ -39,27 +42,42 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-gray-400 mb-6 max-w-md">
-              Leading IT consulting firm delivering innovative software solutions, 
-              cloud services, and digital transformation expertise to businesses worldwide.
+              Salesforce, Zoho, custom development and consulting. Based in India, working with
+              clients worldwide.
             </p>
             <div className="space-y-3">
               <a
-                href="mailto:info@mizraconsulting.com"
+                href={`mailto:${COMPANY.email}`}
                 className="flex items-center space-x-2 hover:text-primary-500 transition-colors"
               >
-                <Mail className="w-5 h-5" />
-                <span>info@mizraconsulting.com</span>
+                <Mail className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                <span>{COMPANY.email}</span>
               </a>
               <a
-                href="tel:+919560316929"
+                href={COMPANY.whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center space-x-2 hover:text-primary-500 transition-colors"
               >
-                <Phone className="w-5 h-5" />
-                <span>+91 95603 16929</span>
+                <MessageCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                <span>WhatsApp {COMPANY.whatsappDisplay}</span>
               </a>
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-5 h-5" />
-                <span>India | UAE | USA</span>
+              {COMPANY.linkedinUrl && (
+                <a
+                  href={COMPANY.linkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2 hover:text-primary-500 transition-colors"
+                >
+                  <Linkedin className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                  <span>LinkedIn</span>
+                </a>
+              )}
+              <div className="flex items-start space-x-2">
+                <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <span>
+                  Registered office: {ADDRESS_ONE_LINE}
+                </span>
               </div>
             </div>
           </div>
@@ -100,29 +118,18 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-          <p className="text-gray-400 text-sm">
-            © {currentYear} Mizra Consulting. All rights reserved.
+        <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between gap-4 text-sm text-gray-400">
+          <p>
+            © {currentYear} {COMPANY.legalName}. CIN {COMPANY.cin}
           </p>
-          <div className="flex items-center space-x-6">
-            <a
-              href="https://linkedin.com/company/mizra-consulting"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-primary-500 transition-colors"
-              aria-label="LinkedIn"
-            >
-              <Linkedin className="w-5 h-5" />
-            </a>
-            <a
-              href="https://twitter.com/mizraconsulting"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-primary-500 transition-colors"
-              aria-label="Twitter"
-            >
-              <Twitter className="w-5 h-5" />
-            </a>
+          <div className="flex items-center gap-6">
+            <Link href="/privacy" className="hover:text-primary-500 transition-colors">
+              Privacy policy
+            </Link>
+            <Link href="/terms" className="hover:text-primary-500 transition-colors">
+              Terms
+            </Link>
+            <CookieSettingsButton />
           </div>
         </div>
       </div>
