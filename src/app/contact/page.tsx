@@ -62,7 +62,7 @@ export default function ContactPage() {
   return (
     <>
       <StructuredData data={structuredData} />
-      
+
       <section className="pt-32 pb-20 bg-gradient-to-br from-gray-50 to-beige-100">
         <div className="container-custom text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
@@ -83,7 +83,7 @@ export default function ContactPage() {
                 Send Us a Message
               </h2>
               <p className="text-gray-600 mb-8">
-                Fill out the form below and our team will get back to you within 24 hours.
+                Tell us what you need. We reply within 4 business hours (Monday to Friday, India time).
               </p>
               <ContactForm />
             </div>

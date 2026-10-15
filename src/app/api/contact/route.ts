@@ -1,48 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkSubmission, isRateLimited, passesBotCheck, saveLead } from '@/lib/leads';
 
+// Handles the enquiry form and the master-class interest form.
+// It only answers { ok: true } after the Google Sheet confirms the save.
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { phone, name, email, step } = body;
+  const ip =
+    request.headers.get('x-real-ip') ??
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    'unknown';
 
-    const GOOGLE_SHEETS_URL = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
-
-    if (!GOOGLE_SHEETS_URL) {
-      console.error('Sheet URL missing');
-      return NextResponse.json({ success: true });
-    }
-
-    // Prepare Form Data for Google Apps Script
-    const formData = new URLSearchParams();
-    
-    // Always send timestamp
-    formData.append('timestamp', new Date().toISOString());
-    
-    // Step 1 & 2: Always send phone if present
-    if (phone) formData.append('phone', phone);
-    
-    // Step 2: Send name and email if present
-    if (name) formData.append('name', name);
-    if (email) formData.append('email', email);
-    
-    // Metadata
-    formData.append('step', step ? String(step) : '1');
-    formData.append('source', 'social_media_app'); 
-    formData.append('sheetName', 'Sheet1'); // Matches your script's dynamic sheet logic
-
-    const response = await fetch(GOOGLE_SHEETS_URL, {
-      method: 'POST',
-      body: formData, // Sends as application/x-www-form-urlencoded
-    });
-
-    if (!response.ok) {
-      console.error('Sheet Error:', await response.text());
-    }
-
-    return NextResponse.json({ success: true });
-
-  } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json({ success: true });
+  // Vercel always sets the visitor's IP; never lump unknown visitors into one shared limit.
+  if (ip !== 'unknown' && isRateLimited(ip)) {
+    return NextResponse.json({ ok: false, error: 'rate_limited' }, { status: 429 });
   }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: 'invalid', fields: {} }, { status: 400 });
+  }
+
+  const check = checkSubmission(body);
+  if (!check.ok && check.reason === 'bot') {
+    // Look like success to the bot, but save nothing.
+    return NextResponse.json({ ok: true });
+  }
+  if (!check.ok) {
+    return NextResponse.json({ ok: false, error: 'invalid', fields: check.fields }, { status: 400 });
+  }
+
+  const token = (body as Record<string, unknown>).botCheckToken;
+  if (!(await passesBotCheck(token, ip))) {
+    return NextResponse.json({ ok: false, error: 'bot_check' }, { status: 400 });
+  }
+
+  const result = await saveLead(check.lead);
+  if (!result.saved) {
+    console.error(`Lead NOT saved (${check.lead.kind}): ${result.problem}`);
+    return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
+  }
+  if (!result.emailed) {
+    console.warn(`Lead saved but the email notification did not send (${check.lead.kind}).`);
+  }
+
+  return NextResponse.json({ ok: true });
 }
