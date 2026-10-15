@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
 import {
   FieldError,
@@ -8,6 +9,7 @@ import {
   inputClass,
   submitLead,
   useBotCheck,
+  useFormTracking,
   useHydrated,
 } from './LeadFormParts';
 
@@ -29,6 +31,7 @@ export default function ContactForm() {
   const successHeading = useRef<HTMLHeadingElement>(null);
   const botCheck = useBotCheck();
   const hydrated = useHydrated();
+  const tracking = useFormTracking('enquiry');
 
   useEffect(() => {
     if (sent) successHeading.current?.focus();
@@ -53,6 +56,7 @@ export default function ContactForm() {
 
     setSending(false);
     if (outcome.status === 'ok') {
+      tracking.onSent();
       setSent(true);
       return;
     }
@@ -88,7 +92,14 @@ export default function ContactForm() {
   }
 
   return (
-    <form method="post" onSubmit={handleSubmit} noValidate className="card border space-y-5 relative">
+    <form
+      ref={tracking.ref}
+      method="post"
+      onSubmit={handleSubmit}
+      onFocus={tracking.onStart}
+      noValidate
+      className="card border space-y-5 relative"
+    >
       <HoneypotField />
 
       <div>
@@ -178,7 +189,11 @@ export default function ContactForm() {
       </button>
 
       <p className="text-xs text-gray-500 text-center">
-        We use your details only to reply to you.
+        We use your details only to reply to you. See our{' '}
+        <Link href="/privacy" className="underline hover:text-primary-900">
+          privacy policy
+        </Link>
+        .
       </p>
     </form>
   );

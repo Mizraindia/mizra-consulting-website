@@ -1,15 +1,15 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/metadata';
 import ClassInterestForm from '@/components/ClassInterestForm';
 
 // Holding page while the new master-class portal is built (revamp Phase C).
 // The old Corporate Readiness Program and its Razorpay payment link were retired in Phase A.
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
+  path: '/student-portal',
   title: 'Master Classes Are Coming',
   description:
     'Live online master classes from Mizra Consulting in product management, product ownership, HR and more. $10 per class. Leave your email to hear when registration opens.',
-  alternates: { canonical: '/student-portal' },
-};
+});
 
 export default function StudentPortalPage() {
   return (

@@ -1,19 +1,13 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/metadata';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
+  path: '/blog',
   title: 'Blog - IT Insights, Tech Trends & Best Practices',
-  description: 'Stay updated with the latest insights on software development, cloud computing, AI/ML, and digital transformation from Mizra Consulting experts.',
-  keywords: [
-    'IT blog',
-    'software development blog',
-    'technology insights',
-    'cloud computing articles',
-    'AI ML tutorials',
-    'digital transformation tips',
-  ],
-};
+  description:
+    'Stay updated with the latest insights on software development, cloud computing, AI/ML, and digital transformation from Mizra Consulting experts.',
+});
 
 export default function BlogPage() {
   return (

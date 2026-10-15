@@ -2,6 +2,21 @@ import Link from 'next/link';
 import { ArrowRight, CheckCircle, Code, Cloud, Brain, Zap } from 'lucide-react';
 import StructuredData from '@/components/StructuredData';
 import ContactForm from '@/components/ContactForm';
+import Promises from '@/components/Promises';
+import { organizationData } from '@/lib/site';
+import { pageMetadata } from '@/lib/metadata';
+
+const HOME_TITLE = 'Mizra Consulting - IT Services & Digital Transformation Solutions';
+
+export const metadata = {
+  ...pageMetadata({
+    path: '/',
+    title: HOME_TITLE,
+    description:
+      'Mizra Consulting implements Salesforce and Zoho, builds custom web and mobile software, and offers consulting. Based in India, working with clients worldwide. Reply within 4 business hours.',
+  }),
+  title: { absolute: HOME_TITLE },
+};
 
 const services = [
   {
@@ -32,57 +47,29 @@ const services = [
 
 const whyChooseUs = [
   {
-    title: 'Expert Team',
-    description: 'Seasoned professionals with deep expertise in modern technologies and industry best practices.',
+    title: 'Scope agreed in writing',
+    description: 'Scope is written and approved before work starts. Any change is written down with its effect on time and cost, and approved before we do it.',
   },
   {
-    title: 'Proven Track Record',
-    description: 'Successfully delivered 100+ projects across diverse industries with measurable business impact.',
+    title: 'A working demo every week',
+    description: 'You see real progress every week, not a big reveal at the end.',
   },
   {
-    title: 'Agile Approach',
-    description: 'Flexible, iterative development process ensuring rapid delivery and continuous improvement.',
+    title: 'Calls in your time zone',
+    description: 'India mornings for Europe and the Middle East, afternoons for Australia, evenings for the US East Coast.',
   },
   {
-    title: 'Cost-Effective',
-    description: 'Competitive pricing with transparent billing and no hidden costs for maximum ROI.',
+    title: 'Training and handover',
+    description: 'A 120-minute training session for your whole team, then documentation and full admin access on the last day.',
   },
-];
-
-const industries = [
-  { name: 'FinTech', icon: '💰' },
-  { name: 'HealthTech', icon: '🏥' },
-  { name: 'EdTech', icon: '📚' },
-  { name: 'E-Commerce', icon: '🛒' },
-  { name: 'SaaS', icon: '☁️' },
-  { name: 'Enterprise', icon: '🏢' },
-];
-
-const stats = [
-  { value: '100+', label: 'Projects Delivered' },
-  { value: '50+', label: 'Happy Clients' },
-  { value: '15+', label: 'Countries Served' },
-  { value: '98%', label: 'Client Satisfaction' },
 ];
 
 export default function HomePage() {
   const structuredData = {
     '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Mizra Consulting',
-    description: 'Leading IT consulting firm specializing in custom software development, cloud solutions, AI/ML, and digital transformation services.',
-    url: 'https://mizraconsulting.com',
-    logo: 'https://mizraconsulting.com/mizra-logo.svg',
-    contactPoint: {
-      '@type': 'ContactPoint',
-      telephone: '+91-92057-10374',
-      contactType: 'Customer Service',
-      email: 'info@mizraconsulting.com',
-    },
-    sameAs: [
-      'https://linkedin.com/company/mizra-consulting',
-      'https://twitter.com/mizraconsulting',
-    ],
+    ...organizationData(),
+    description:
+      'Salesforce, Zoho, custom web and mobile development, and consulting. Based in India, working with clients worldwide.',
   };
 
   return (
@@ -108,15 +95,15 @@ export default function HomePage() {
               <div className="space-y-3 mb-8">
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="w-5 h-5 text-primary-500 flex-shrink-0" />
-                  <span className="text-gray-700">Free consultation & project assessment</span>
+                  <span className="text-gray-700">Free review call to understand what you need</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="w-5 h-5 text-primary-500 flex-shrink-0" />
-                  <span className="text-gray-700">24-hour response time guaranteed</span>
+                  <span className="text-gray-700">Reply within 4 business hours (Monday to Friday, India time)</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="w-5 h-5 text-primary-500 flex-shrink-0" />
-                  <span className="text-gray-700">Trusted by 50+ enterprise clients</span>
+                  <span className="text-gray-700">A written fixed estimate before any work starts</span>
                 </div>
               </div>
 
@@ -184,7 +171,7 @@ export default function HomePage() {
               Why Choose Mizra Consulting
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Partner with a team that delivers excellence
+              How every project runs, from the first call to handover
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -203,44 +190,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Industries Section */}
-      <section className="section-padding">
+      {/* Our promises (replaces the old client-number band) */}
+      <section className="section-padding bg-[#1A0036] text-white" aria-labelledby="promises-heading">
         <div className="container-custom">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Industries We Serve
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Delivering specialized solutions across diverse sectors
-            </p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {industries.map((industry, index) => (
-              <div
-                key={index}
-                className="card text-center border hover:shadow-lg transition-shadow"
-              >
-                <div className="text-4xl mb-3">{industry.icon}</div>
-                <h3 className="font-semibold text-gray-900">{industry.name}</h3>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="section-padding bg-primary-500 text-white">
-        <div className="container-custom">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-4xl md:text-5xl font-bold mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-primary-100">{stat.label}</div>
-              </div>
-            ))}
-          </div>
+          <h2 id="promises-heading" className="text-3xl md:text-4xl font-bold text-center mb-12">
+            Our promises to you
+          </h2>
+          <Promises variant="band" />
         </div>
       </section>
 

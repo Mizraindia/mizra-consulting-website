@@ -2,6 +2,7 @@
 
 import Script from 'next/script';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { trackEvent } from '@/lib/analytics';
 
 // Shared pieces for every form that sends a lead to /api/contact.
 
@@ -83,6 +84,46 @@ export function useHydrated() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
   return hydrated;
+}
+
+/**
+ * Analytics events for a lead form: seen (half of it on screen), started (first
+ * field focused) and sent (saved successfully). Each fires at most once.
+ */
+export function useFormTracking(formName: string) {
+  const observer = useRef<IntersectionObserver | null>(null);
+  const viewed = useRef(false);
+  const started = useRef(false);
+
+  const ref = useCallback(
+    (form: HTMLFormElement | null) => {
+      observer.current?.disconnect();
+      observer.current = null;
+      if (!form || viewed.current || typeof IntersectionObserver === 'undefined') return;
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            viewed.current = true;
+            trackEvent('lead_form_view', { form_name: formName });
+            observer.current?.disconnect();
+          }
+        },
+        { threshold: 0.5 },
+      );
+      observer.current.observe(form);
+    },
+    [formName],
+  );
+
+  const onStart = useCallback(() => {
+    if (started.current) return;
+    started.current = true;
+    trackEvent('lead_form_start', { form_name: formName });
+  }, [formName]);
+
+  const onSent = useCallback(() => trackEvent('generate_lead', { form_name: formName }), [formName]);
+
+  return { ref, onStart, onSent };
 }
 
 /** Hidden from people and screen readers; bots tend to fill it in. */

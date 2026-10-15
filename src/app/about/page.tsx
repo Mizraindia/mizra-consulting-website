@@ -1,19 +1,16 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/metadata';
 import Link from 'next/link';
 import { Target, Eye, Award, Users, Globe, TrendingUp, ArrowRight } from 'lucide-react';
 import StructuredData from '@/components/StructuredData';
+import Promises from '@/components/Promises';
+import { organizationData } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'About Us - Leading IT Consulting & Software Development Company',
-  description: 'Learn about Mizra Consulting - a trusted IT services partner delivering innovative software solutions, cloud services, and digital transformation expertise worldwide.',
-  keywords: [
-    'IT consulting company',
-    'software development firm',
-    'technology consulting',
-    'digital transformation experts',
-    'IT services provider',
-  ],
-};
+export const metadata = pageMetadata({
+  path: '/about',
+  title: 'About Us - Salesforce, Zoho, Custom Development & Consulting',
+  description:
+    'Mizra Consulting helps companies implement Salesforce and Zoho, build custom web and mobile software, and fix the processes behind them. Based in Gurugram, India, working with clients worldwide.',
+});
 
 const values = [
   {
@@ -33,16 +30,9 @@ const values = [
   },
   {
     icon: Globe,
-    title: 'Global Reach',
-    description: 'Serving clients worldwide with local expertise and global standards of service delivery.',
+    title: 'Wherever You Are',
+    description: 'Calls scheduled in your time zone and clear written updates, wherever you are in the world.',
   },
-];
-
-const stats = [
-  { value: '2015', label: 'Founded' },
-  { value: '100+', label: 'Projects Completed' },
-  { value: '50+', label: 'Enterprise Clients' },
-  { value: '15+', label: 'Countries' },
 ];
 
 const expertise = [
@@ -60,20 +50,7 @@ export default function AboutPage() {
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'AboutPage',
-    mainEntity: {
-      '@type': 'Organization',
-      name: 'Mizra Consulting',
-      description: 'Leading IT consulting firm specializing in custom software development, cloud solutions, and digital transformation.',
-      foundingDate: '2015',
-      url: 'https://mizraconsulting.com',
-      logo: 'https://mizraconsulting.com/mizra-logo.svg',
-      contactPoint: {
-        '@type': 'ContactPoint',
-        telephone: '+91-92057-10374',
-        contactType: 'Customer Service',
-        email: 'info@mizraconsulting.com',
-      },
-    },
+    mainEntity: organizationData(),
   };
 
   return (
@@ -86,7 +63,7 @@ export default function AboutPage() {
             About Mizra Consulting
           </h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-            Empowering businesses with innovative technology solutions since 2015
+            Salesforce, Zoho, custom development and consulting, from Gurugram, India, for clients worldwide
           </p>
         </div>
       </section>
@@ -100,31 +77,24 @@ export default function AboutPage() {
               </h2>
               <div className="space-y-4 text-gray-600">
                 <p>
-                  Founded in 2015, Mizra Consulting emerged from a vision to bridge the gap between 
-                  business challenges and technology solutions. What started as a small team of passionate 
-                  developers has grown into a full-service IT consulting firm serving clients across the globe.
+                  Mizra means &ldquo;the direction where the sun rises.&rdquo; The sun stands for a fresh
+                  start, and the forward mark on it stands for the path forward: every day is a new chance
+                  to do something productive.
                 </p>
                 <p>
-                  We specialize in delivering custom software development, cloud solutions, AI/ML implementation, 
-                  and comprehensive digital transformation services. Our expertise spans multiple industries, 
-                  from FinTech and HealthTech to E-Commerce and Enterprise SaaS.
+                  We help companies implement Salesforce and Zoho, build custom web and mobile software,
+                  and fix the processes behind them. We are based in Gurugram, India, and work with clients
+                  worldwide, with calls scheduled in your time zone.
                 </p>
                 <p>
-                  Today, we&apos;re proud to have delivered 100+ successful projects, partnered with 50+ enterprise 
-                  clients, and maintained a 98% client satisfaction rate. Our commitment to excellence, innovation, 
-                  and client success drives everything we do.
+                  Every project gets a written scope and a fixed estimate before work starts, a working
+                  demo every week, and a full handover at the end.
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-6">
-              {stats.map((stat, index) => (
-                <div key={index} className="card text-center bg-gradient-to-br from-primary-50 to-beige-50">
-                  <div className="text-4xl font-bold text-primary-500 mb-2">
-                    {stat.value}
-                  </div>
-                  <div className="text-gray-600">{stat.label}</div>
-                </div>
-              ))}
+            <div>
+              <h2 className="sr-only">Our promises to you</h2>
+              <Promises variant="cards" />
             </div>
           </div>
         </div>

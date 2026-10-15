@@ -63,6 +63,17 @@ const nextConfig: NextConfig = {
         destination: '/',
         permanent: true,
       },
+      // These were listed in the old sitemap but never existed.
+      {
+        source: '/industries',
+        destination: '/services',
+        permanent: true,
+      },
+      {
+        source: '/faq',
+        destination: '/contact',
+        permanent: true,
+      },
     ];
   },
 };
