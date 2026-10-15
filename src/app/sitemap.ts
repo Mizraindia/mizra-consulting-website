@@ -4,7 +4,7 @@ import { SITE_URL } from '@/lib/site';
 // Only real, finished pages. /privacy and /terms are left out until a lawyer has
 // reviewed them (they are also marked noindex until then). /blog (Resources) is left
 // out until the first article is published.
-const routes = ['', '/services', '/about', '/contact', '/student-portal'];
+const routes = ['', '/salesforce', '/services', '/about', '/contact', '/student-portal'];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

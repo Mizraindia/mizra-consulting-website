@@ -72,7 +72,8 @@ publishes always-pass Turnstile test keys for local use.
 | Address | Notes |
 | --- | --- |
 | `/` | Home (approved design); copy in `src/content/home.ts` |
-| `/services` | Services |
+| `/salesforce` | Salesforce service page; content in `src/content/services/salesforce.ts`, layout in `src/components/ServicePage.tsx` |
+| `/services` | Old services page (to be redirected when all four service pages exist) |
 | `/about` | About |
 | `/contact` | Enquiry form, email, WhatsApp, registered office |
 | `/student-portal` | "Master classes are coming" holding page with sign-up |

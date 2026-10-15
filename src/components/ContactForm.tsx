@@ -57,7 +57,14 @@ const VARIANTS = {
   },
 };
 
-export default function ContactForm({ variant = 'default' }: { variant?: keyof typeof VARIANTS }) {
+export default function ContactForm({
+  variant = 'default',
+  showIntro = true,
+}: {
+  variant?: keyof typeof VARIANTS;
+  /** Hero variant only: hide "So, what's going on?" when the page already has a heading above the form. */
+  showIntro?: boolean;
+}) {
   const style = VARIANTS[variant];
   const id = (field: string) => `${style.idPrefix}-${field}`;
   const [fields, setFields] = useState<FormFields>(EMPTY);
@@ -148,7 +155,7 @@ export default function ContactForm({ variant = 'default' }: { variant?: keyof t
     >
       <HoneypotField />
 
-      {variant === 'hero' && (
+      {variant === 'hero' && showIntro && (
         <>
           <h2 className="font-display mb-1 text-[26px] font-semibold leading-tight">So, what&apos;s going on?</h2>
           <p className="mb-6 text-base text-mz-muted">Two sentences is plenty. We&apos;ll ask the rest.</p>

@@ -122,7 +122,13 @@ export default function HomePage() {
                 className="flex flex-wrap items-center gap-x-10 gap-y-4 border-t border-mz-border py-8"
               >
                 <h3 className="font-display m-0 flex-[0_0_300px] text-[28px] font-semibold leading-[1.15] sm:text-[32px]">
-                  {service.name}
+                  {service.page ? (
+                    <Link href={service.page} className="underline decoration-mz-chip decoration-2 underline-offset-[6px] hover:decoration-mz-accent">
+                      {service.name}
+                    </Link>
+                  ) : (
+                    service.name
+                  )}
                 </h3>
                 <p className="min-w-0 flex-[1_1_360px] text-[19px] text-mz-body">{service.text}</p>
                 <Link

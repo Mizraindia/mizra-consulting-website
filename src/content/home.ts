@@ -18,7 +18,7 @@ export const PAINS = [
     quote:
       'Our customer data is scattered across spreadsheets and emails, and I have no idea which deals are closing.',
     link: "That's what our Salesforce work is for",
-    href: '/#salesforce',
+    href: '/salesforce',
   },
   {
     quote: 'We juggle a dozen apps for invoicing, email and leads, and none of them talk to each other.',
@@ -38,10 +38,12 @@ export const PAINS = [
   },
 ];
 
-export const SERVICES = [
+// `page` is set once the service has its own page; the name then links to it.
+export const SERVICES: { id: string; name: string; page?: string; text: string }[] = [
   {
     id: 'salesforce',
     name: 'Salesforce',
+    page: '/salesforce',
     text: 'Objects and sales stages that match your real sales cycle, automated lead routing and follow-ups, and dashboards your leaders can trust.',
   },
   {

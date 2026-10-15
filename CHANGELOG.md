@@ -4,6 +4,23 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Phase C, step 2: Salesforce page
+
+- New `/salesforce` page from the owner's Salesforce workbook: the buyer's problems
+  and what they cost, signs a setup needs rescuing, five services (implementation,
+  migration, clean-up, integrations, ongoing support), the method, testing, training,
+  timeline (8 to 12 weeks), products and tools, three rules, data security, nine
+  questions and answers, and the enquiry form.
+- Left out until confirmed: certifications, named project leads, claims of past
+  results, prices, and the founder's personal history.
+- Shared service-page template (`src/components/ServicePage.tsx`) with content in
+  `src/content/services/`, plus search-engine data (Service, FAQ, breadcrumb).
+- Salesforce links in the menu, footer and homepage now point to `/salesforce`;
+  `/salesforce` added to the sitemap.
+- LinkedIn company page link switched on (footer, contact page, search-engine data).
+- Floating contact button recoloured to the brand and hidden on pages that already
+  have the form.
+
 ### Phase C, step 1: New homepage
 
 - New homepage built from the approved design: hero with the enquiry form, "Sound
