@@ -4,6 +4,28 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Phase C, step 1: New homepage
+
+- New homepage built from the approved design: hero with the enquiry form, "Sound
+  familiar?", the four services, the six-step project path, "How we work", the master
+  classes strip, questions and answers, and a closing banner.
+- Copy follows the owner's confirmed facts and decisions: no prices, no start-slot
+  card or badge, no class dates, titles or prices, no Resources section, and the
+  closing banner says "We reply within 4 business hours". Unconfirmed design lines
+  were left out. Copy lives in `src/content/home.ts`.
+- The four confirmed promises now appear in the hero and the project path (the
+  separate promises band is replaced by the new design).
+- New site-wide header (dark, Services menu, Master classes, How it works, Contact,
+  "Tell us what you need") and footer (services, company links, email, WhatsApp, CIN
+  and registered office). Blog and Resources links removed until the first article;
+  `/blog` is hidden from search and the sitemap but still opens.
+- Brand fonts (Poppins, Instrument Sans) served from the site; brand colours added.
+- The homepage FAQ is marked up for search engines (FAQPage).
+- Accessibility: "Skip to content" link, labelled menu button, 44px tap targets in the
+  footer, jump links clear the sticky header, smooth scrolling respects "reduce motion".
+- The HTTPS redirect now skips `localhost`, so a production build can be tested on a
+  computer (Vercel already enforces HTTPS).
+
 ### Phase B: Clean-up
 
 **Client claims removed (B1)**

@@ -71,12 +71,12 @@ publishes always-pass Turnstile test keys for local use.
 
 | Address | Notes |
 | --- | --- |
-| `/` | Home, enquiry form, the four promises |
+| `/` | Home (approved design); copy in `src/content/home.ts` |
 | `/services` | Services |
 | `/about` | About |
 | `/contact` | Enquiry form, email, WhatsApp, registered office |
 | `/student-portal` | "Master classes are coming" holding page with sign-up |
-| `/blog` | Coming-soon placeholder |
+| `/blog` | Coming-soon placeholder; hidden from menus, search and the sitemap until the first article |
 | `/privacy`, `/terms` | Drafts awaiting lawyer review; kept out of search results and the sitemap |
 
 Redirects (permanent): `/home` to `/`, `/industries` to `/services`, `/faq` to `/contact`.

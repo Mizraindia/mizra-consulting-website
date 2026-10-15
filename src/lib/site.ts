@@ -22,6 +22,14 @@ export const COMPANY = {
   hours: '9 am to 7 pm India time (IST), Monday to Friday',
 };
 
+/** The four services. Point these at the service pages once they exist (Phase C, step 2). */
+export const SERVICE_LINKS = [
+  { name: 'Salesforce', href: '/#salesforce' },
+  { name: 'Zoho', href: '/#zoho' },
+  { name: 'Custom development', href: '/#custom-development' },
+  { name: 'Consulting', href: '/#consulting' },
+];
+
 export const ADDRESS_ONE_LINE = `${COMPANY.address.street}, ${COMPANY.address.city} ${COMPANY.address.postalCode}, ${COMPANY.address.country}`;
 
 /** The four promises the owner confirmed (shown where the old number blocks were). */

@@ -4,6 +4,8 @@ import { ArrowRight } from 'lucide-react';
 
 export const metadata = pageMetadata({
   path: '/blog',
+  // Hidden from search and navigation until the first article is published.
+  noindex: true,
   title: 'Blog - IT Insights, Tech Trends & Best Practices',
   description:
     'Stay updated with the latest insights on software development, cloud computing, AI/ML, and digital transformation from Mizra Consulting experts.',
@@ -13,7 +15,7 @@ export default function BlogPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="pt-32 pb-20 bg-gradient-to-br from-gray-50 to-beige-100">
+      <section className="pt-16 pb-20 bg-gradient-to-br from-gray-50 to-beige-100">
         <div className="container-custom text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Blog & Insights

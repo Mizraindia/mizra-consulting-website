@@ -9,7 +9,7 @@ export default function LegalPage({
   children: React.ReactNode;
 }) {
   return (
-    <article className="pt-32 pb-20">
+    <article className="pt-16 pb-20">
       <div className="container-custom max-w-3xl">
         <p
           role="note"

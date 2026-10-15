@@ -9,8 +9,8 @@ export default function FloatingCTA() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const pathname = usePathname();
 
-  // Hide on contact page
-  if (pathname === '/contact') {
+  // Hide where the enquiry form is already on the page
+  if (pathname === '/contact' || pathname === '/') {
     return null;
   }
 

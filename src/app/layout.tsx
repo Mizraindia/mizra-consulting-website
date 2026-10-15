@@ -1,21 +1,29 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Instrument_Sans, Poppins } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Analytics from '@/components/Analytics';
 import FloatingCTA from '@/components/FloatingCTA';
 
-const inter = Inter({
+// Fonts from the approved design, served from this site (no Google request at runtime).
+const bodyFont = Instrument_Sans({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-body",
+});
+
+const displayFont = Poppins({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+  variable: "--font-display",
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://mizraconsulting.com'),
   title: {
-    default: "Mizra Consulting - IT Services & Digital Transformation Solutions",
+    default: "Mizra Consulting: Salesforce, Zoho, Custom Development and Consulting",
     template: "%s | Mizra Consulting"
   },
   description: "Mizra Consulting implements Salesforce and Zoho, builds custom web and mobile software, and offers consulting. Based in India, working with clients worldwide. Reply within 4 business hours.",
@@ -58,7 +66,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "Mizra Consulting",
-    title: "Mizra Consulting - IT Services & Digital Transformation Solutions",
+    title: "Mizra Consulting: Salesforce, Zoho, Custom Development and Consulting",
     description: "Mizra Consulting implements Salesforce and Zoho, builds custom web and mobile software, and offers consulting. Based in India, working with clients worldwide. Reply within 4 business hours.",
     images: [
       {
@@ -71,7 +79,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mizra Consulting - IT Services & Digital Transformation",
+    title: "Mizra Consulting: Salesforce, Zoho, Custom Development and Consulting",
     description: "Mizra Consulting implements Salesforce and Zoho, builds custom web and mobile software, and offers consulting. Based in India, working with clients worldwide. Reply within 4 business hours.",
     images: ["/og-image.jpg"],
   },
@@ -89,15 +97,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${bodyFont.variable} ${displayFont.variable}`}>
       <head>
         <link rel="icon" href="/mizra-logo.png" sizes="any" />
         <link rel="apple-touch-icon" href="/mizra-logo.png" />
         <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body className="font-sans">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-mz-ink"
+        >
+          Skip to content
+        </a>
         <Header />
-        <main className="min-h-screen">
+        <main id="main" className="min-h-screen">
           {children}
         </main>
         <Footer />
