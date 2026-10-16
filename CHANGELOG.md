@@ -4,6 +4,13 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Phase D, stage 1: master classes portal (registration switched OFF)
+
+- New classes sheet script (`integrations/google-apps-script/classes.gs`): public class list (never Meet links or personal data), registration with a lock, one per email per class, seat limit, confirmation email with Meet link and calendar file. 10 automated tests (`npm run test:scripts`).
+- `/student-portal` shows the unchanged holding page until `CLASS_REGISTRATION_OPEN` is `true`; then the class list, class pages with Event data, and the registration form. Paid classes cannot be booked until payment (stage 2).
+- Class registration has its own rate limit (20 per 10 minutes per network).
+- Removed the old global loading spinner so missing pages return a real 404.
+
 ### Resources go live
 
 - First article, "Salesforce vs HubSpot vs Zoho: how to choose the right CRM", at
@@ -177,3 +184,4 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 **Housekeeping**
 - `docs/revamp/` and `.claude/` are kept out of the public repository.
 - Added `.env.example` listing setting names (no values).
+
