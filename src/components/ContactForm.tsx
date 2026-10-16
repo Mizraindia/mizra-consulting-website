@@ -124,8 +124,8 @@ export default function ContactForm({
         {variant === 'hero' ? (
           <CheckCircle className="mx-auto h-12 w-12 text-mz-accent" aria-hidden="true" />
         ) : (
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-12 h-12 text-green-500" aria-hidden="true" />
+          <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-12 h-12 text-primary-500" aria-hidden="true" />
           </div>
         )}
         <SuccessHeading ref={successHeading} tabIndex={-1} className={style.successHeading}>

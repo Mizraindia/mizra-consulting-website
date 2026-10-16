@@ -1,8 +1,8 @@
 import type { ServiceContent } from './types';
 
 // Source: the owner's Salesforce workbook (02-Salesforce) and confirmed-facts.md.
-// Left out on purpose until the owner confirms them: certifications, named project
-// leads, claims of past results, prices, and the founder's personal history.
+// Left out on purpose: certifications, named project leads, claims of past results,
+// prices, and anyone's personal years of experience (owner decision, 16 October 2026).
 
 export const SALESFORCE: ServiceContent = {
   slug: 'salesforce',
@@ -31,19 +31,25 @@ export const SALESFORCE: ServiceContent = {
       'The last consultant left and nobody knows how it works.',
       'Reports take a day to build.',
     ],
-    costs: [
-      'Duplicate records mean two reps call the same customer.',
-      'Missing data means leaders do not trust reports, so they decide on instinct.',
+    boxes: [
+      {
+        heading: 'What it costs you',
+        items: [
+          'Duplicate records mean two reps call the same customer.',
+          'Missing data means leaders do not trust reports, so they decide on instinct.',
+        ],
+      },
+      {
+        heading: 'Signs your Salesforce needs a rescue',
+        bullets: true,
+        items: [
+          'Many custom fields that nobody uses',
+          'Automation nobody can explain',
+          'Admins who have left',
+          'Reports that disagree with each other',
+        ],
+      },
     ],
-    signs: {
-      heading: 'Signs your Salesforce needs a rescue',
-      items: [
-        'Many custom fields that nobody uses',
-        'Automation nobody can explain',
-        'Admins who have left',
-        'Reports that disagree with each other',
-      ],
-    },
   },
   offerings: {
     heading: 'What we do',
@@ -91,8 +97,10 @@ export const SALESFORCE: ServiceContent = {
         text: 'We write the change down with its effect on time and cost, you approve it, and it goes into the plan. No surprises.',
       },
     ],
-    timeline:
-      'Most implementations take 8 to 12 weeks. More teams, more integrations, messy data and slow decisions make a project take longer and cost more.',
+    timeline: {
+      label: 'How long it takes.',
+      text: 'Most implementations take 8 to 12 weeks. More teams, more integrations, messy data and slow decisions make a project take longer and cost more.',
+    },
   },
   products: {
     heading: 'Salesforce products and tools',
@@ -125,6 +133,7 @@ export const SALESFORCE: ServiceContent = {
       text: 'Least-privilege access, no data on personal devices, a non-disclosure agreement before any data is shared, and our access removed on the last day.',
     },
   },
+  faqHeading: 'Questions about Salesforce',
   faq: [
     {
       q: 'How do you handle scope changes mid-project?',

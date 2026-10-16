@@ -4,6 +4,34 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Phase C, step 3: Zoho, Custom development, Consulting, services overview, restyle
+
+- New `/zoho`, `/custom-development` and `/consulting` pages from the owner's workbooks,
+  using the Salesforce page template (same layout, sections and components).
+  Left out until confirmed: prices, Zoho certifications or partner status (none held),
+  Zoho products marked "some experience", demo projects, the public code repository,
+  the gym and e-commerce examples, the consulting experience line, and the plan length
+  in the typical first consulting engagement.
+- All four service pages show the owner's line next to the main button: "We match the
+  right expert to your scope: an experienced practitioner with 5 to 10+ years in the
+  field, or a specialist with 20 years when your project needs one." No personal years
+  of experience, names or profile links appear anywhere on the site.
+- Consulting: the typical first engagement ends with a prioritised 30 to 60 day plan.
+- `/services` is now a short overview in the new style linking to the four pages,
+  replacing the old cloud, AI and "digital transformation" content.
+- Header Services menu: All services, Salesforce, Zoho, Custom development, Consulting.
+  Homepage, footer and sitemap link to all four service pages.
+- About, Contact, the master-classes holding page and Privacy/Terms now use the brand
+  colours and fonts (the older colour names map to the brand palette; buttons and cards
+  restyled). Wording on the master-classes page and Privacy/Terms is unchanged,
+  checked word for word against the live site.
+- About: removed the Mission, Vision and Expertise sections and the "Innovation" value
+  (it said "cutting-edge"); the story, promises, other values and closing box remain.
+- Contact: new intro "Tell us what you need. We will reply with a plan, not a
+  brochure." and a LinkedIn card; the rest is unchanged.
+- Removed the site-wide meta keywords list, which advertised services Mizra does not
+  offer (cloud, AI, DevOps, staff augmentation, "digital transformation").
+
 ### Phase C, step 2: Salesforce page
 
 - New `/salesforce` page from the owner's Salesforce workbook: the buyer's problems

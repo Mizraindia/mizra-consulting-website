@@ -9,17 +9,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // "primary" and "beige" are used by the older pages (About, Contact, master
+        // classes, legal pages). They now map to the brand violet palette, so those
+        // pages match the new design without any wording changes.
         primary: {
-          50: '#FFF5F0',
-          100: '#FFE8DB',
-          200: '#FFD1B8',
-          300: '#FFB894',
-          400: '#FF9F71',
-          500: '#FF6B35', // Main orange
-          600: '#F7931E',
-          700: '#E67E22',
-          800: '#D35400',
-          900: '#A04000',
+          50: '#F5F2FB',
+          100: '#EDE7F7',
+          200: '#DDD3EE',
+          300: '#C9BEE0',
+          400: '#8B6CC7',
+          500: '#4C1D95', // brand accent violet
+          600: '#33007A',
+          700: '#2A0F52',
+          800: '#1F0A40',
+          900: '#1A0036',
         },
         gray: {
           50: '#F9FAFB',
@@ -31,14 +34,14 @@ const config: Config = {
           600: '#4B5563',
           700: '#374151',
           800: '#1F2937',
-          900: '#111827',
+          900: '#1A0036', // brand ink, for headings on the older pages
         },
         beige: {
-          50: '#FDFCFB',
-          100: '#FAF8F3',
-          200: '#F5F5DC',
-          300: '#EAE8D8',
-          400: '#DDD9C4',
+          50: '#FBFAFD',
+          100: '#F1EEF8',
+          200: '#E4DFEE',
+          300: '#D4CCE4',
+          400: '#C9BEE0',
         },
         // Brand colours from the approved design (docs/revamp/design/Main.dc.html)
         mz: {

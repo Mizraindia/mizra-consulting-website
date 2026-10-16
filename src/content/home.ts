@@ -23,18 +23,18 @@ export const PAINS = [
   {
     quote: 'We juggle a dozen apps for invoicing, email and leads, and none of them talk to each other.',
     link: "That's what our Zoho work is for",
-    href: '/#zoho',
+    href: '/zoho',
   },
   {
     quote:
       'Every off-the-shelf tool forces us to change how we work. We need something built around our process.',
     link: "You'll see working software every week",
-    href: '/#custom-development',
+    href: '/custom-development',
   },
   {
     quote: 'We know something in our operations is leaking, but not where, or what to fix first.',
     link: "Let's find the leaks and decide what to fix first",
-    href: '/#consulting',
+    href: '/consulting',
   },
 ];
 
@@ -49,16 +49,19 @@ export const SERVICES: { id: string; name: string; page?: string; text: string }
   {
     id: 'zoho',
     name: 'Zoho',
+    page: '/zoho',
     text: 'Zoho CRM set up around how you work, leads routed straight from your forms, and quotes, invoices and payments connected in one place.',
   },
   {
     id: 'custom-development',
     name: 'Custom development',
+    page: '/custom-development',
     text: 'We turn your needs into clear specs, connect your systems through APIs, and build the web tools and apps you need, shown to you every week.',
   },
   {
     id: 'consulting',
     name: 'Consulting',
+    page: '/consulting',
     text: 'We map where your process leaks, give you a prioritised tool roadmap, and line your team up on product and backlog.',
   },
 ];

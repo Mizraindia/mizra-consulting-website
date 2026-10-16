@@ -9,6 +9,13 @@ export interface ServiceOffering {
   need?: string;
 }
 
+export interface ServiceBox {
+  heading: string;
+  items: string[];
+  /** Show the items as a bulleted list (otherwise as plain lines). */
+  bullets?: boolean;
+}
+
 export interface ServiceContent {
   slug: string;
   name: string;
@@ -25,8 +32,8 @@ export interface ServiceContent {
   problems: {
     heading: string;
     quotes: string[];
-    costs: string[];
-    signs?: { heading: string; items: string[] };
+    /** One or two cards under the quotes. */
+    boxes: ServiceBox[];
   };
   offerings: { heading: string; items: ServiceOffering[] };
   method: {
@@ -34,7 +41,7 @@ export interface ServiceContent {
     steps: string[];
     stepsNote?: string;
     details: { title: string; text: string }[];
-    timeline?: string;
+    timeline?: { label: string; text: string };
   };
   products?: {
     heading: string;
@@ -42,6 +49,7 @@ export interface ServiceContent {
     saysNo?: string;
   };
   principles?: { heading: string; items: string[]; extra?: { title: string; text: string } };
+  faqHeading: string;
   faq: { q: string; a: string }[];
   closing: { title: string; text: string };
 }

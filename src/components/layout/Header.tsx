@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronDown, Menu, X } from 'lucide-react';
-import { SERVICE_LINKS } from '@/lib/site';
+import { SERVICES_MENU } from '@/lib/site';
 
 const navigation = [
   { name: 'Master classes', href: '/student-portal' },
@@ -61,7 +61,7 @@ export default function Header() {
               <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
             </summary>
             <div className="absolute left-[-16px] top-full z-10 min-w-[240px] rounded-lg border border-mz-line bg-mz-night py-2">
-              {SERVICE_LINKS.map((service) => (
+              {SERVICES_MENU.map((service) => (
                 <Link
                   key={service.name}
                   href={service.href}
@@ -110,7 +110,7 @@ export default function Header() {
         <div id="mobile-menu" className="border-t border-mz-line px-4 pb-6 pt-2 lg:hidden">
           <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-mz-lilac">Services</p>
           <ul className="mt-1">
-            {SERVICE_LINKS.map((service) => (
+            {SERVICES_MENU.map((service) => (
               <li key={service.name}>
                 <Link href={service.href} onClick={closeAll} className="flex min-h-[44px] items-center text-lg">
                   {service.name}

@@ -58,8 +58,7 @@ export default function ContactPage() {
             Get in Touch
           </h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-            Ready to transform your business with innovative IT solutions? 
-            Let&apos;s start a conversation.
+            Tell us what you need. We will reply with a plan, not a brochure.
           </p>
         </div>
       </section>

@@ -1,6 +1,6 @@
 import { pageMetadata } from '@/lib/metadata';
 import Link from 'next/link';
-import { Target, Eye, Award, Users, Globe, TrendingUp, ArrowRight } from 'lucide-react';
+import { Award, Users, Globe, ArrowRight } from 'lucide-react';
 import StructuredData from '@/components/StructuredData';
 import Promises from '@/components/Promises';
 import { organizationData } from '@/lib/site';
@@ -24,26 +24,10 @@ const values = [
     description: 'Your success is our priority. We build lasting partnerships through transparency and collaboration.',
   },
   {
-    icon: TrendingUp,
-    title: 'Innovation',
-    description: 'We embrace cutting-edge technologies and innovative approaches to solve complex business challenges.',
-  },
-  {
     icon: Globe,
     title: 'Wherever You Are',
     description: 'Calls scheduled in your time zone and clear written updates, wherever you are in the world.',
   },
-];
-
-const expertise = [
-  'Custom Software Development',
-  'Cloud Architecture & Migration',
-  'AI & Machine Learning',
-  'DevOps & Automation',
-  'Digital Transformation',
-  'Enterprise Solutions',
-  'Mobile Development',
-  'Data Engineering',
 ];
 
 export default function AboutPage() {
@@ -100,37 +84,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="section-padding bg-gray-50">
-        <div className="container-custom">
-          <div className="grid md:grid-cols-2 gap-12">
-            <div className="card">
-              <div className="w-16 h-16 bg-primary-100 rounded-lg flex items-center justify-center mb-6">
-                <Target className="w-8 h-8 text-primary-500" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h2>
-              <p className="text-gray-600">
-                To empower businesses with innovative, scalable, and secure technology solutions 
-                that drive digital transformation and sustainable growth. We&apos;re committed to delivering 
-                exceptional value through cutting-edge expertise, agile methodologies, and unwavering 
-                dedication to client success.
-              </p>
-            </div>
-            <div className="card">
-              <div className="w-16 h-16 bg-primary-100 rounded-lg flex items-center justify-center mb-6">
-                <Eye className="w-8 h-8 text-primary-500" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Vision</h2>
-              <p className="text-gray-600">
-                To be the most trusted technology partner for businesses worldwide, recognized for 
-                our innovation, excellence, and transformative impact. We envision a future where 
-                technology seamlessly enables business success, and we&apos;re at the forefront of making 
-                that vision a reality.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="section-padding">
         <div className="container-custom">
           <div className="text-center mb-12">
@@ -141,7 +94,7 @@ export default function AboutPage() {
               The principles that guide our work and relationships
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             {values.map((value, index) => (
               <div key={index} className="card text-center border hover:shadow-lg transition-shadow">
                 <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -151,29 +104,6 @@ export default function AboutPage() {
                   {value.title}
                 </h3>
                 <p className="text-gray-600">{value.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section-padding bg-gray-50">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Our Expertise
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Comprehensive technology capabilities to meet your business needs
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            {expertise.map((item, index) => (
-              <div
-                key={index}
-                className="bg-white px-6 py-4 rounded-lg text-center font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
-              >
-                {item}
               </div>
             ))}
           </div>

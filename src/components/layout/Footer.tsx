@@ -38,7 +38,7 @@ export default function Footer() {
         </div>
 
         <div className="min-w-0 flex-[1_1_150px]">
-          <h2 className="mb-1 text-base font-semibold text-mz-cream">Services</h2>
+          <h2 className="mb-1 font-sans text-base font-semibold text-mz-cream">Services</h2>
           <ul>
             {SERVICE_LINKS.map((link) => (
               <li key={link.name}>
@@ -51,7 +51,7 @@ export default function Footer() {
         </div>
 
         <div className="min-w-0 flex-[1_1_150px]">
-          <h2 className="mb-1 text-base font-semibold text-mz-cream">Company</h2>
+          <h2 className="mb-1 font-sans text-base font-semibold text-mz-cream">Company</h2>
           <ul>
             {companyLinks.map((link) => (
               <li key={link.name}>
@@ -64,7 +64,7 @@ export default function Footer() {
         </div>
 
         <div className="min-w-0 flex-[1_1_220px]">
-          <h2 className="mb-1 text-base font-semibold text-mz-cream">Say hello</h2>
+          <h2 className="mb-1 font-sans text-base font-semibold text-mz-cream">Say hello</h2>
           <ul>
             <li>
               <a href={`mailto:${COMPANY.email}`} className={linkClass}>

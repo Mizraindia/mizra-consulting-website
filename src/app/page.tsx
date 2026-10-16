@@ -199,7 +199,7 @@ export default function HomePage() {
       {/* How we work */}
       <section className="bg-mz-deep py-20 text-white sm:py-[104px]">
         <div className="mx-auto max-w-[1000px] px-4 sm:px-8">
-          <h2 className={`${eyebrow} mb-7 text-mz-amber`}>How we work</h2>
+          <h2 className={`font-sans ${eyebrow} mb-7 text-mz-amber`}>How we work</h2>
           {HOW_WE_WORK.map((item) => (
             <p
               key={item.lead}

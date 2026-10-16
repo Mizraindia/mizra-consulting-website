@@ -8,6 +8,11 @@ import type { ServiceContent } from '@/content/services/types';
 // Layout shared by the Salesforce, Zoho, Custom development and Consulting pages,
 // using the same design language as the homepage. Sections without content are skipped.
 
+// Owner's wording, 16 October 2026, shown on all four service pages next to the main
+// button. Never add personal years of experience, names or profile links here.
+const EXPERT_MATCH =
+  'We match the right expert to your scope: an experienced practitioner with 5 to 10+ years in the field, or a specialist with 20 years when your project needs one.';
+
 const container = 'mx-auto max-w-[1200px] px-4 sm:px-8';
 const eyebrow = 'mb-4 text-sm font-semibold uppercase tracking-[0.14em]';
 const sectionHeading = 'font-display text-[30px] font-semibold leading-[1.2] tracking-[-0.015em] sm:text-[40px]';
@@ -72,7 +77,7 @@ export default function ServicePage({ content }: { content: ServiceContent }) {
             {hero.title}
           </h1>
           <p className="mb-8 max-w-[640px] text-[19px] text-mz-mist sm:text-[21px]">{hero.intro}</p>
-          <ul className="mb-10 flex flex-col gap-2.5 text-[17px]">
+          <ul className="mb-7 flex flex-col gap-2.5 text-[17px]">
             {hero.situations.map((item) => (
               <li key={item} className="flex items-start gap-3">
                 <span aria-hidden="true" className="mt-[9px] h-2.5 w-2.5 flex-none rounded-full bg-mz-amber" />
@@ -80,6 +85,9 @@ export default function ServicePage({ content }: { content: ServiceContent }) {
               </li>
             ))}
           </ul>
+          <p className="mb-10 max-w-[640px] border-l-2 border-mz-amber pl-4 text-[17px] text-mz-lilac">
+            {EXPERT_MATCH}
+          </p>
           <Link
             href="#get-started"
             className="inline-flex min-h-[56px] items-center justify-center rounded-full bg-mz-amber px-8 text-[17px] font-semibold text-mz-ink hover:bg-[#ffbb33]"
@@ -102,24 +110,25 @@ export default function ServicePage({ content }: { content: ServiceContent }) {
             ))}
           </ul>
           <div className="flex flex-wrap gap-6">
-            <div className="min-w-0 flex-[1_1_420px] rounded-[20px] border border-mz-border bg-white p-7 sm:p-9">
-              <h3 className="font-display mb-4 text-2xl font-semibold">What it costs you</h3>
-              <ul className="space-y-3 text-[17px] text-mz-body">
-                {problems.costs.map((cost) => (
-                  <li key={cost}>{cost}</li>
-                ))}
-              </ul>
-            </div>
-            {problems.signs && (
-              <div className="min-w-0 flex-[1_1_420px] rounded-[20px] border border-mz-border bg-white p-7 sm:p-9">
-                <h3 className="font-display mb-4 text-2xl font-semibold">{problems.signs.heading}</h3>
-                <ul className="list-disc space-y-2 pl-5 text-[17px] text-mz-body marker:text-mz-accent">
-                  {problems.signs.items.map((sign) => (
-                    <li key={sign}>{sign}</li>
+            {problems.boxes.map((box) => (
+              <div
+                key={box.heading}
+                className="min-w-0 flex-[1_1_420px] rounded-[20px] border border-mz-border bg-white p-7 sm:p-9"
+              >
+                <h3 className="font-display mb-4 text-2xl font-semibold">{box.heading}</h3>
+                <ul
+                  className={
+                    box.bullets
+                      ? 'list-disc space-y-2 pl-5 text-[17px] text-mz-body marker:text-mz-accent'
+                      : 'space-y-3 text-[17px] text-mz-body'
+                  }
+                >
+                  {box.items.map((item) => (
+                    <li key={item}>{item}</li>
                   ))}
                 </ul>
               </div>
-            )}
+            ))}
           </div>
         </div>
       </section>
@@ -192,8 +201,8 @@ export default function ServicePage({ content }: { content: ServiceContent }) {
           </div>
           {method.timeline && (
             <p className="mt-10 max-w-[760px] rounded-[20px] bg-mz-soft p-7 text-[18px]">
-              <strong>How long it takes. </strong>
-              {method.timeline}
+              <strong>{method.timeline.label} </strong>
+              {method.timeline.text}
             </p>
           )}
         </div>
@@ -225,7 +234,7 @@ export default function ServicePage({ content }: { content: ServiceContent }) {
       {principles && (
         <section className="bg-mz-deep py-20 text-white sm:py-24">
           <div className="mx-auto max-w-[1000px] px-4 sm:px-8">
-            <h2 className={`${eyebrow} mb-7 text-mz-amber`}>{principles.heading}</h2>
+            <h2 className={`font-sans ${eyebrow} mb-7 text-mz-amber`}>{principles.heading}</h2>
             <ul className="mb-12 space-y-4">
               {principles.items.map((item) => (
                 <li
@@ -250,7 +259,7 @@ export default function ServicePage({ content }: { content: ServiceContent }) {
       <section className="py-20 sm:py-24">
         <div className="mx-auto max-w-[820px] px-4 sm:px-8">
           <h2 className="font-display mb-8 text-[30px] font-semibold leading-[1.2] tracking-[-0.015em] sm:text-[36px]">
-            Questions about {content.name}
+            {content.faqHeading}
           </h2>
           <div className="border-b border-mz-chip">
             {faq.map((item) => (

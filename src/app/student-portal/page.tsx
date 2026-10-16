@@ -13,9 +13,9 @@ export const metadata = pageMetadata({
 
 export default function StudentPortalPage() {
   return (
-    <section className="pt-16 pb-20 bg-gradient-to-b from-orange-50 to-white">
+    <section className="pt-16 pb-20 bg-gradient-to-b from-primary-50 to-white">
       <div className="container-custom max-w-2xl text-center">
-        <span className="inline-block px-4 py-2 rounded-full bg-orange-100 text-primary-900 font-medium mb-6">
+        <span className="inline-block px-4 py-2 rounded-full bg-primary-100 text-primary-900 font-medium mb-6">
           Mizra master classes
         </span>
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">

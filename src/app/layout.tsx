@@ -27,23 +27,8 @@ export const metadata: Metadata = {
     template: "%s | Mizra Consulting"
   },
   description: "Mizra Consulting implements Salesforce and Zoho, builds custom web and mobile software, and offers consulting. Based in India, working with clients worldwide. Reply within 4 business hours.",
-  keywords: [
-    "IT consulting services",
-    "custom software development",
-    "digital transformation",
-    "cloud computing services",
-    "AI machine learning solutions",
-    "enterprise software development",
-    "IT staff augmentation",
-    "DevOps consulting",
-    "software engineering services",
-    "technology consulting firm",
-    "MVP development",
-    "SaaS development",
-    "mobile app development",
-    "web application development",
-    "IT project management"
-  ],
+  // No meta keywords: search engines ignore them, and the old list advertised services
+  // Mizra does not offer.
   icons: {
     icon: "/mizra-logo.png",
   },

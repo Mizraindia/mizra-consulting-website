@@ -28,7 +28,7 @@ Setting names are listed in `.env.example`. Real values live in Vercel
 | --- | --- | --- |
 | `LEADS_SHEET_URL` | Web app address of the Apps Script attached to the leads sheet | Yes, or forms show an error |
 | `LEADS_SHEET_SECRET` | Shared password; same value as `SHARED_SECRET` in the script | Yes |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile invisible bot check | No (off when empty) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile bot check. Create the widget in **Invisible** mode; the visible widget is 300px wide and crowds the forms on small phones | No (off when empty) |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics 4 measurement ID (`G-...`) | No (analytics and the consent banner are off when empty) |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Google Search Console HTML-tag code | No |
 | `NEXT_PUBLIC_BING_SITE_VERIFICATION` | Bing Webmaster Tools HTML-tag code | No |
@@ -72,8 +72,8 @@ publishes always-pass Turnstile test keys for local use.
 | Address | Notes |
 | --- | --- |
 | `/` | Home (approved design); copy in `src/content/home.ts` |
-| `/salesforce` | Salesforce service page; content in `src/content/services/salesforce.ts`, layout in `src/components/ServicePage.tsx` |
-| `/services` | Old services page (to be redirected when all four service pages exist) |
+| `/services` | Short overview linking to the four service pages |
+| `/salesforce`, `/zoho`, `/custom-development`, `/consulting` | Service pages; content in `src/content/services/`, layout in `src/components/ServicePage.tsx` |
 | `/about` | About |
 | `/contact` | Enquiry form, email, WhatsApp, registered office |
 | `/student-portal` | "Master classes are coming" holding page with sign-up |
