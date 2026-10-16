@@ -31,6 +31,9 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
   brochure." and a LinkedIn card; the rest is unchanged.
 - Removed the site-wide meta keywords list, which advertised services Mizra does not
   offer (cloud, AI, DevOps, staff augmentation, "digital transformation").
+- `/blog` is now a one-line holding page in the new style, "Resources are coming.",
+  with all old cloud, AI and "digital transformation" wording removed. It stays out of
+  the menus and the sitemap and hidden from search engines until the first article.
 
 ### Phase C, step 2: Salesforce page
 
