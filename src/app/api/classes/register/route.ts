@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isRateLimited, passesBotCheck } from '@/lib/leads';
+import { createPaymentLink, referenceFor } from '@/lib/razorpay';
 import { CONSENT_TEXT, CONSENT_VERSION } from '@/lib/class-consent';
 import {
   checkRegistration,
@@ -61,7 +62,23 @@ export async function POST(request: NextRequest) {
     source: text(body.source, 200),
   });
 
-  if (reply.ok) return NextResponse.json({ ok: true, status: reply.status, emailed: reply.emailed !== false });
+  if (reply.ok && reply.status === 'registered') {
+    return NextResponse.json({ ok: true, status: 'registered', emailed: reply.emailed !== false });
+  }
+  if (reply.ok && reply.status === 'awaiting_payment') {
+    // The seat is held for 30 minutes. Send the visitor to Razorpay's secure payment page.
+    const link = await createPaymentLink({
+      amountCents: reply.amountCents,
+      referenceId: referenceFor(reply.token),
+      description: `Mizra master class: ${reply.title}`,
+      name: check.registration.name,
+      email: check.registration.email,
+      callbackUrl: `${new URL(request.url).origin}/student-portal/payment-complete`,
+      classId: check.registration.classId,
+    });
+    if (!link) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
+    return NextResponse.json({ ok: true, status: 'awaiting_payment', paymentUrl: link.shortUrl });
+  }
 
   const statusCode: Record<string, number> = {
     duplicate: 409,
@@ -71,6 +88,7 @@ export async function POST(request: NextRequest) {
     busy: 503,
     invalid: 400,
   };
+  if (reply.ok) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
   if (reply.error === 'unavailable' || !(reply.error in statusCode)) {
     console.error(`Class registration NOT saved: ${reply.error}`);
   }

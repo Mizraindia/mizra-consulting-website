@@ -25,7 +25,15 @@ const ERRORS: Record<string, string> = {
 };
 const UNAVAILABLE = `Sorry, we couldn't register you just now. What you typed is still here, so please try again in a minute, or email us at ${CONTACT_EMAIL}.`;
 
-export default function RegistrationForm({ classId, classTitle }: { classId: string; classTitle: string }) {
+export default function RegistrationForm({
+  classId,
+  classTitle,
+  priceUsd = 0,
+}: {
+  classId: string;
+  classTitle: string;
+  priceUsd?: number;
+}) {
   const [who, setWho] = useState<Who>('self');
   const [fields, setFields] = useState({ name: '', email: '', whatsapp: '', studentFirstName: '' });
   const [consent, setConsent] = useState(false);
@@ -33,6 +41,7 @@ export default function RegistrationForm({ classId, classTitle }: { classId: str
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState<{ emailed: boolean } | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
   const [startedAt] = useState(() => Date.now());
   const successHeading = useRef<HTMLHeadingElement>(null);
   const botCheck = useBotCheck();
@@ -71,10 +80,19 @@ export default function RegistrationForm({ classId, classTitle }: { classId: str
       });
       const reply = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
+        status?: string;
+        paymentUrl?: string;
         emailed?: boolean;
         error?: string;
         fields?: Record<string, string>;
       };
+      if (res.ok && reply.ok && reply.status === 'awaiting_payment' && reply.paymentUrl) {
+        // Seat held; continue on Razorpay's secure payment page.
+        trackEvent('class_checkout_start', { class_id: classId });
+        setRedirecting(true);
+        window.location.assign(reply.paymentUrl);
+        return;
+      }
       if (res.ok && reply.ok) {
         trackEvent('class_registration', { class_id: classId });
         setDone({ emailed: reply.emailed !== false });
@@ -206,12 +224,24 @@ export default function RegistrationForm({ classId, classTitle }: { classId: str
 
       <button
         type="submit"
-        disabled={sending || !hydrated}
+        disabled={sending || redirecting || !hydrated}
         className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-mz-accent text-[17px] font-semibold text-white hover:bg-mz-deep disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {sending && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
-        {sending ? 'Registering...' : 'Register'}
+        {(sending || redirecting) && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
+        {redirecting
+          ? 'Taking you to secure payment...'
+          : sending
+            ? 'Registering...'
+            : priceUsd > 0
+              ? `Continue to payment ($${priceUsd})`
+              : 'Register'}
       </button>
+      {priceUsd > 0 && (
+        <p className="mt-3 text-[13px] text-mz-muted">
+          You pay ${priceUsd} securely on Razorpay&apos;s payment page. Your seat is held for 30 minutes while you pay.
+          Full refund until 24 hours before the class; after that, we offer a place in the next class instead.
+        </p>
+      )}
       <p className="mt-3 text-[13px] text-mz-muted">
         We use your WhatsApp number only for class reminders. For students under 18, everything goes to the parent
         or guardian and we keep only the student&apos;s first name.

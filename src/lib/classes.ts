@@ -4,6 +4,8 @@
 //   CLASSES_SCRIPT_URL       web app address of the classes script
 //   CLASSES_SCRIPT_SECRET    shared password; same value as SHARED_SECRET in the script
 
+import { paymentsConfigured } from './razorpay';
+
 export interface PublicClass {
   id: string;
   title: string;
@@ -22,11 +24,11 @@ export function isRegistrationOpen(): boolean {
 }
 
 /**
- * Stage 1 guard: until online payment is built and configured, priced classes cannot be
- * booked, so nobody can register for a paid class without paying.
+ * Priced classes can be booked only when Razorpay is fully configured, so nobody can
+ * register for a paid class without paying.
  */
 export function paymentsReady(): boolean {
-  return false;
+  return paymentsConfigured();
 }
 
 async function callScript<T>(body: Record<string, unknown>, revalidate?: number): Promise<T | null> {
@@ -68,10 +70,26 @@ export async function getClass(id: string): Promise<PublicClass | null | undefin
 
 export type RegisterReply =
   | { ok: true; status: 'registered'; emailed?: boolean }
+  | { ok: true; status: 'awaiting_payment'; token: string; amountCents: number; currency: string; title: string }
   | { ok: false; error: string };
 
 export async function registerWithScript(payload: Record<string, unknown>): Promise<RegisterReply> {
   const reply = await callScript<RegisterReply>({ action: 'register', ...payload });
+  return reply ?? { ok: false, error: 'unavailable' };
+}
+
+export type MarkPaidReply =
+  | { ok: true; status: 'paid' | 'needs_attention'; emailed?: boolean; repeat?: boolean }
+  | { ok: false; error: string };
+
+/** Only call this after Razorpay's signature has been verified. Safe to repeat. */
+export async function markPaidWithScript(p: {
+  token: string;
+  paymentId: string;
+  amountCents: number;
+  currency: string;
+}): Promise<MarkPaidReply> {
+  const reply = await callScript<MarkPaidReply>({ action: 'markPaid', ...p });
   return reply ?? { ok: false, error: 'unavailable' };
 }
 

@@ -114,7 +114,7 @@ export default async function ClassPage({ params }: Params) {
 
           <div className="w-full min-w-0 flex-[1_1_360px] rounded-[20px] border border-mz-border bg-white p-6 sm:p-7">
             {cls.seatsLeft > 0 ? (
-              <RegistrationForm classId={cls.id} classTitle={cls.title} />
+              <RegistrationForm classId={cls.id} classTitle={cls.title} priceUsd={cls.priceUsd} />
             ) : (
               <div>
                 <h2 className="mb-2 font-display text-2xl font-semibold">This class is full</h2>

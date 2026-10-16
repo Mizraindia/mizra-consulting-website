@@ -39,7 +39,7 @@ var REGISTRATION_HEADERS = [
   'Email',                // F
   'WhatsApp',             // G
   'Student first name',   // H  only when a parent or guardian registers a child
-  'Status',               // I  registered | waitlisted | cancelled | paid | refunded
+  'Status',               // I  registered | awaiting payment | paid | expired | waitlisted | cancelled | refunded | CHECK: ...
   'Payment ID',           // J
   'Cancel token',         // K
   'Consent at (UTC)',     // L
@@ -50,9 +50,12 @@ var REGISTRATION_HEADERS = [
 ];
 
 var TOPICS = ['Product management', 'Product ownership', 'HR'];
-// Statuses that hold a seat.
+// Statuses that always hold a seat. "awaiting payment" holds one only for HOLD_MINUTES.
 var HOLDS_SEAT = ['registered', 'paid'];
+var AWAITING = 'awaiting payment';
+var HOLD_MINUTES = 30;
 var LOCK_WAIT_MS = 20000;
+var REFUND_RULE = 'Full refund until 24 hours before the class. After that, we offer a place in the next class instead.';
 
 /** Run once from the editor: creates the two tabs, headers, dropdowns and time zone. */
 function setup() {
@@ -89,6 +92,7 @@ function doPost(e) {
 
     if (request.action === 'list') return reply_({ ok: true, classes: publicClasses_() });
     if (request.action === 'register') return reply_(register_(request));
+    if (request.action === 'markPaid') return reply_(markPaid_(request));
     return reply_({ ok: false, error: 'unknown action' });
   } catch (error) {
     console.error(error);
@@ -123,13 +127,34 @@ function readRegistrations_() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(REGISTRATIONS_SHEET);
   if (!sheet || sheet.getLastRow() < 2) return [];
   return sheet.getRange(2, 1, sheet.getLastRow() - 1, REGISTRATION_HEADERS.length).getValues()
-    .map(function (row) {
+    .map(function (row, i) {
       return {
+        rowNumber: i + 2,
+        registeredAt: new Date(row[0]),
         classId: String(row[1]).trim(),
+        type: String(row[3]).trim(),
+        name: String(row[4]).replace(/^'/, '').trim(),
         email: String(row[5]).trim().toLowerCase(),
+        child: String(row[7]).replace(/^'/, '').trim(),
         status: String(row[8]).trim().toLowerCase(),
+        paymentId: String(row[9]).trim(),
+        token: String(row[10]).trim(),
+        timeZone: String(row[13]).trim(),
       };
     });
+}
+
+/** An unpaid registration still within its payment window. */
+function isActiveHold_(r, now) {
+  return r.status === AWAITING && now - r.registeredAt.getTime() < HOLD_MINUTES * 60000;
+}
+
+function setCells_(rowNumber, values) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(REGISTRATIONS_SHEET);
+  Object.keys(values).forEach(function (header) {
+    var col = REGISTRATION_HEADERS.indexOf(header) + 1;
+    sheet.getRange(rowNumber, col).setValue(safeCell_(values[header]));
+  });
 }
 
 /** A class the website may show and take registrations for. */
@@ -141,9 +166,11 @@ function isOpenUpcoming_(c) {
     c.duration > 0 && c.seats > 0 && c.price >= 0;
 }
 
-function seatsTaken_(registrations, classId) {
+function seatsTaken_(registrations, classId, exceptRow) {
+  var now = Date.now();
   return registrations.filter(function (r) {
-    return r.classId === classId && HOLDS_SEAT.indexOf(r.status) >= 0;
+    return r.classId === classId && r.rowNumber !== exceptRow &&
+      (HOLDS_SEAT.indexOf(r.status) >= 0 || isActiveHold_(r, now));
   }).length;
 }
 
@@ -201,12 +228,20 @@ function register_(request) {
     if (!isOpenUpcoming_(cls)) return { ok: false, error: 'closed' };
 
     var registrations = readRegistrations_();
-    var duplicate = registrations.some(function (r) {
-      return r.classId === cls.id && r.email === email && r.status !== 'cancelled';
+    var nowMs = Date.now();
+    var mine = registrations.filter(function (r) { return r.classId === cls.id && r.email === email; });
+    var settled = mine.some(function (r) {
+      return HOLDS_SEAT.indexOf(r.status) >= 0 || r.status === 'waitlisted' || r.status.indexOf('check') === 0;
     });
-    if (duplicate) return { ok: false, error: 'duplicate' };
+    if (settled) return { ok: false, error: 'duplicate' };
+    var held = mine.filter(function (r) { return isActiveHold_(r, nowMs); })[0];
+    if (held) {
+      // Came back to pay within the payment window: reuse the seat that is already held.
+      return { ok: true, status: 'awaiting_payment', token: held.token, amountCents: Math.round(cls.price * 100), currency: 'USD', title: cls.title };
+    }
     if (seatsTaken_(registrations, cls.id) >= cls.seats) return { ok: false, error: 'full' };
 
+    var paid = cls.price > 0;
     token = Utilities.getUuid();
     var now = new Date();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(REGISTRATIONS_SHEET);
@@ -214,12 +249,16 @@ function register_(request) {
       now.toISOString(), cls.id, cls.title,
       type === 'parent' ? 'parent or guardian' : 'self',
       name, email, whatsapp, child,
-      'registered', '', token,
+      paid ? AWAITING : 'registered', '', token,
       text_(request.consentAt, 40) || now.toISOString(), text_(request.consentText, 600),
-      timeZone, text_(request.source, 200), 'pending',
+      timeZone, text_(request.source, 200), paid ? 'after payment' : 'pending',
     ].map(safeCell_));
     SpreadsheetApp.flush();
     rowNumber = sheet.getLastRow();
+    if (paid) {
+      // No email yet: the confirmation (with the Meet link) is sent once payment is verified.
+      return { ok: true, status: 'awaiting_payment', token: token, amountCents: Math.round(cls.price * 100), currency: 'USD', title: cls.title };
+    }
   } finally {
     lock.releaseLock();
   }
@@ -236,6 +275,78 @@ function register_(request) {
     .getRange(rowNumber, REGISTRATION_HEADERS.length).setValue(emailed ? 'yes' : 'FAILED');
 
   return { ok: true, status: 'registered', emailed: emailed };
+}
+
+/**
+ * Called by the website after it has verified Razorpay's signature (from the payment
+ * notification or the visitor's return from the payment page). Safe to call more than once
+ * for the same payment: the payment ID makes repeats harmless.
+ */
+function markPaid_(request) {
+  var ref = text_(request.token, 64).replace(/-/g, '');
+  var paymentId = text_(request.paymentId, 64);
+  var amountCents = Number(request.amountCents);
+  var currency = text_(request.currency, 3).toUpperCase();
+  if (!ref || !/^pay_[A-Za-z0-9]+$/.test(paymentId) || !isFinite(amountCents)) return { ok: false, error: 'invalid' };
+
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(LOCK_WAIT_MS)) return { ok: false, error: 'busy' };
+
+  var row, cls, problem = '', sendEmail = false;
+  try {
+    row = readRegistrations_().filter(function (r) { return r.token.replace(/-/g, '') === ref; })[0];
+    if (!row) return { ok: false, error: 'not_found' };
+    cls = readClasses_().filter(function (c) { return c.id === row.classId; })[0];
+
+    if (row.status === 'paid') {
+      if (row.paymentId === paymentId) return { ok: true, status: 'paid', repeat: true };
+      problem = 'Second payment ' + paymentId + ' for a seat already paid by ' + row.paymentId + '. Refund the second payment.';
+    } else if (!cls || amountCents !== Math.round(cls.price * 100) || currency !== 'USD') {
+      problem = 'Payment ' + paymentId + ' of ' + (amountCents / 100) + ' ' + currency + ' does not match the class price. Check before confirming.';
+      setCells_(row.rowNumber, { 'Status': 'CHECK: amount', 'Payment ID': paymentId });
+    } else if (row.status === AWAITING || row.status === 'expired') {
+      var seatFree = isActiveHold_(row, Date.now()) ||
+        seatsTaken_(readRegistrations_(), row.classId, row.rowNumber) < cls.seats;
+      if (seatFree) {
+        setCells_(row.rowNumber, { 'Status': 'paid', 'Payment ID': paymentId });
+        sendEmail = true;
+      } else {
+        problem = 'Payment ' + paymentId + ' arrived after the payment window and the class is now full. Refund, or add a seat and confirm by hand.';
+        setCells_(row.rowNumber, { 'Status': 'CHECK: paid but no seat', 'Payment ID': paymentId });
+      }
+    } else {
+      problem = 'Payment ' + paymentId + ' received for a registration with status "' + row.status + '". Check and refund if needed.';
+      setCells_(row.rowNumber, { 'Payment ID': paymentId });
+    }
+  } finally {
+    lock.releaseLock();
+  }
+
+  if (problem) {
+    alertOwner_('Master class payment needs your attention', problem + '\n\nRegistrant: ' + row.name + ' <' + row.email + '>\nClass: ' + row.classId);
+    return { ok: true, status: 'needs_attention' };
+  }
+  var emailed = false;
+  if (sendEmail) {
+    try {
+      sendConfirmation_(cls, { name: row.name, email: row.email, child: row.child, timeZone: validTimeZone_(row.timeZone), token: row.token, paymentId: paymentId });
+      emailed = true;
+    } catch (error) {
+      console.error('Confirmation email failed: ' + error);
+    }
+    setCells_(row.rowNumber, { 'Confirmation email': emailed ? 'yes' : 'FAILED' });
+  }
+  return { ok: true, status: 'paid', emailed: emailed };
+}
+
+function alertOwner_(subject, body) {
+  var owner = PropertiesService.getScriptProperties().getProperty('OWNER_EMAIL');
+  if (!owner) return;
+  try {
+    MailApp.sendEmail({ to: owner, subject: subject, body: body });
+  } catch (error) {
+    console.error('Owner alert failed: ' + error);
+  }
 }
 
 function validTimeZone_(tz) {
@@ -276,7 +387,12 @@ function sendConfirmation_(cls, person) {
   if (person.timeZone !== 'Asia/Kolkata') lines.push('India time: ' + formatWhen_(cls.start, 'Asia/Kolkata'));
   lines.push(
     'Length: ' + cls.duration + ' minutes',
-    'Join link: ' + cls.meetLink,
+    'Join link: ' + cls.meetLink
+  );
+  if (person.paymentId) {
+    lines.push('', 'Payment received: $' + cls.price + ' (payment ID ' + person.paymentId + ').', REFUND_RULE);
+  }
+  lines.push(
     '',
     'A calendar file is attached. Please keep the join link to yourself.',
     '',

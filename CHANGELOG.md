@@ -4,6 +4,20 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Phase D, stage 2: payment with Razorpay (registration still switched OFF)
+
+- Paid classes: the seat is held for 30 minutes as "awaiting payment", the visitor pays on a
+  Razorpay Payment Link (USD, exact class price), and the registration becomes "paid" with the
+  payment ID. The confirmation email (Meet link, payment, refund rule) is sent only after payment.
+- Payments are recorded only after Razorpay's signature is verified: on the payment
+  notification (`/api/classes/razorpay-webhook`, HMAC-SHA256 of the raw body) and on the visitor's
+  return (`/student-portal/payment-complete`, signed fields, amount re-checked with Razorpay).
+  Repeated notices are harmless (keyed on the payment ID). Duplicate payments, wrong amounts and
+  late payments for a full class are flagged to the owner by email instead of confirmed.
+- The old disabled `/api/contact/razorpay-webhook` is deleted.
+- Setup steps, including test mode and checking USD, in `integrations/google-apps-script/CLASSES-SETUP.md`.
+- 9 new payment tests (19 in total, `npm run test:scripts`).
+
 ### Phase D, stage 1: master classes portal (registration switched OFF)
 
 - New classes sheet script (`integrations/google-apps-script/classes.gs`): public class list (never Meet links or personal data), registration with a lock, one per email per class, seat limit, confirmation email with Meet link and calendar file. 10 automated tests (`npm run test:scripts`).

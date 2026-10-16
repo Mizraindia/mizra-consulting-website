@@ -231,6 +231,116 @@ test('when the lock is busy, asks the visitor to try again instead of overbookin
   assert.equal(env.sheets.Registrations.rows.length, 1);
 });
 
+// --- Payment (stage 2) ---
+
+const paidClass = (env, overrides = {}) => addClass(env, { id: 'paid-po', topic: 'Product ownership', price: 10, ...overrides });
+const markPaid = (env, token, overrides = {}) =>
+  env.call({ secret: SECRET, action: 'markPaid', token: token.replace(/-/g, ''), paymentId: 'pay_ABC123', amountCents: 1000, currency: 'USD', ...overrides });
+
+test('a paid class holds the seat while awaiting payment and sends no email yet', () => {
+  const env = load();
+  paidClass(env, { seats: 1 });
+  const r = env.call(person({ classId: 'paid-po' }));
+  assert.equal(r.status, 'awaiting_payment');
+  assert.equal(r.amountCents, 1000);
+  assert.equal(r.currency, 'USD');
+  assert.equal(env.sheets.Registrations.rows[1][8], 'awaiting payment');
+  assert.equal(env.sent.length, 0, 'no Meet link before payment');
+  // The held seat counts, so a second person sees the class as full.
+  assert.equal(env.call(person({ classId: 'paid-po', email: 'other@example.com' })).error, 'full');
+  assert.equal(env.call({ secret: SECRET, action: 'list' }).classes[0].seatsLeft, 0);
+});
+
+test('coming back within the payment window reuses the held seat', () => {
+  const env = load();
+  paidClass(env);
+  const first = env.call(person({ classId: 'paid-po' }));
+  const again = env.call(person({ classId: 'paid-po' }));
+  assert.equal(again.status, 'awaiting_payment');
+  assert.equal(again.token, first.token);
+  assert.equal(env.sheets.Registrations.rows.length - 1, 1);
+});
+
+test('an expired hold frees the seat', () => {
+  const env = load();
+  paidClass(env, { seats: 1 });
+  env.call(person({ classId: 'paid-po' }));
+  env.sheets.Registrations.rows[1][0] = new Date(Date.now() - 31 * 60000).toISOString();
+  assert.equal(env.call(person({ classId: 'paid-po', email: 'next@example.com' })).status, 'awaiting_payment');
+});
+
+test('verified payment marks the row paid and emails the Meet link with the payment and refund rule', () => {
+  const env = load();
+  const cls = paidClass(env);
+  const r = env.call(person({ classId: 'paid-po' }));
+  const paid = markPaid(env, r.token);
+  assert.equal(paid.status, 'paid');
+  const row = env.sheets.Registrations.rows[1];
+  assert.equal(row[8], 'paid');
+  assert.equal(row[9], 'pay_ABC123');
+  assert.equal(row[15], 'yes');
+  assert.equal(env.sent.length, 1);
+  assert.ok(env.sent[0].body.includes(cls.meet));
+  assert.ok(env.sent[0].body.includes('Payment received: $10 (payment ID pay_ABC123)'));
+  assert.ok(env.sent[0].body.includes('Full refund until 24 hours before the class'));
+});
+
+test('the same payment reported twice is handled once', () => {
+  const env = load();
+  paidClass(env);
+  const r = env.call(person({ classId: 'paid-po' }));
+  markPaid(env, r.token);
+  const repeat = markPaid(env, r.token);
+  assert.equal(repeat.repeat, true);
+  assert.equal(env.sent.length, 1, 'only one confirmation email');
+});
+
+test('a second, different payment for a paid seat alerts the owner instead of double-booking', () => {
+  const env = load();
+  paidClass(env);
+  const r = env.call(person({ classId: 'paid-po' }));
+  markPaid(env, r.token);
+  const second = markPaid(env, r.token, { paymentId: 'pay_SECOND9' });
+  assert.equal(second.status, 'needs_attention');
+  assert.equal(env.sheets.Registrations.rows[1][9], 'pay_ABC123', 'first payment kept');
+  const alert = env.sent.find((m) => m.to === 'owner@example.com');
+  assert.ok(alert && alert.body.includes('pay_SECOND9'));
+});
+
+test('a payment with the wrong amount or currency is flagged, not confirmed', () => {
+  const env = load();
+  paidClass(env);
+  const r = env.call(person({ classId: 'paid-po' }));
+  assert.equal(markPaid(env, r.token, { amountCents: 100 }).status, 'needs_attention');
+  assert.equal(env.sheets.Registrations.rows[1][8], 'CHECK: amount');
+  assert.ok(!env.sent.some((m) => m.to === 'asha@example.com'), 'no Meet link sent');
+
+  const env2 = load();
+  paidClass(env2);
+  const r2 = env2.call(person({ classId: 'paid-po' }));
+  assert.equal(markPaid(env2, r2.token, { currency: 'INR' }).status, 'needs_attention');
+});
+
+test('payment after the window when the class has filled up is flagged for a refund', () => {
+  const env = load();
+  paidClass(env, { seats: 1 });
+  const late = env.call(person({ classId: 'paid-po' }));
+  env.sheets.Registrations.rows[1][0] = new Date(Date.now() - 31 * 60000).toISOString();
+  const other = env.call(person({ classId: 'paid-po', email: 'quick@example.com' }));
+  markPaid(env, other.token, { paymentId: 'pay_QUICK1' });
+  const result = markPaid(env, late.token, { paymentId: 'pay_LATE1' });
+  assert.equal(result.status, 'needs_attention');
+  assert.equal(env.sheets.Registrations.rows[1][8], 'CHECK: paid but no seat');
+});
+
+test('payment notices with unknown references or bad payment IDs are rejected', () => {
+  const env = load();
+  paidClass(env);
+  assert.equal(markPaid(env, 'nosuchtoken').error, 'not_found');
+  const r = env.call(person({ classId: 'paid-po' }));
+  assert.equal(markPaid(env, r.token, { paymentId: 'not-a-payment' }).error, 'invalid');
+});
+
 test('stops a name from becoming a spreadsheet formula, and falls back on unknown time zones', () => {
   const env = load();
   addClass(env);

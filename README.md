@@ -29,6 +29,9 @@ Setting names are listed in `.env.example`. Real values live in Vercel
 | `LEADS_SHEET_URL` | Web app address of the Apps Script attached to the leads sheet | Yes, or forms show an error |
 | `LEADS_SHEET_SECRET` | Shared password; same value as `SHARED_SECRET` in the script | Yes |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile bot check. Create the widget in **Invisible** mode; the visible widget is 300px wide and crowds the forms on small phones | No (off when empty) |
+| `CLASS_REGISTRATION_OPEN` | `true` switches the master classes portal on; otherwise "Master classes are coming" | No (off when unset) |
+| `CLASSES_SCRIPT_URL`, `CLASSES_SCRIPT_SECRET` | Classes sheet script (separate from leads); see `integrations/google-apps-script/CLASSES-SETUP.md` | When the portal is on |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | Razorpay for paid classes (test keys on Preview). Paid classes cannot be booked until all three are set | For paid classes |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics 4 measurement ID (`G-...`) | No (analytics and the consent banner are off when empty) |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Google Search Console HTML-tag code | No |
 | `NEXT_PUBLIC_BING_SITE_VERIFICATION` | Bing Webmaster Tools HTML-tag code | No |
