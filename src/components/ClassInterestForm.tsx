@@ -68,7 +68,7 @@ export default function ClassInterestForm() {
   if (sent) {
     return (
       <div className="card border text-center py-8" role="status">
-        <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" aria-hidden="true" />
+        <CheckCircle className="w-12 h-12 text-primary-500 mx-auto mb-4" aria-hidden="true" />
         <h3 ref={successHeading} tabIndex={-1} className="text-2xl font-bold text-gray-900 mb-3 outline-none">
           You&apos;re on the list.
         </h3>

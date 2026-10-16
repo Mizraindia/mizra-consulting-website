@@ -1,275 +1,101 @@
-import { pageMetadata } from '@/lib/metadata';
 import Link from 'next/link';
-import { Code, Cloud, Brain, Zap, Users, Cog, ArrowRight, CheckCircle } from 'lucide-react';
 import StructuredData from '@/components/StructuredData';
+import { pageMetadata } from '@/lib/metadata';
+import { SITE_URL } from '@/lib/site';
+import { SERVICES } from '@/content/home';
 
-export const metadata = pageMetadata({
-  path: '/services',
-  title: 'IT Services - Custom Software, Cloud, AI/ML Solutions',
-  description:
-    'Comprehensive IT consulting services including custom software development, cloud solutions, AI/ML, DevOps, digital transformation, and IT staff augmentation.',
-});
+// Short overview linking to the four service pages. Copy reuses the approved homepage
+// wording (src/content/home.ts), so the two never disagree.
 
-const services = [
-  {
-    id: 'software',
-    icon: Code,
-    title: 'Custom Software Development',
-    description: 'Build scalable, secure, and high-performance software solutions tailored to your business needs.',
-    features: [
-      'Web Application Development',
-      'Mobile App Development (iOS/Android)',
-      'Enterprise Software Solutions',
-      'API Development & Integration',
-      'Legacy System Modernization',
-      'MVP & Product Development',
-    ],
-    technologies: ['React', 'Node.js', 'Python', 'Java', '.NET', 'Flutter'],
-  },
-  {
-    id: 'cloud',
-    icon: Cloud,
-    title: 'Cloud Solutions & DevOps',
-    description: 'Accelerate your digital transformation with scalable cloud infrastructure and DevOps practices.',
-    features: [
-      'Cloud Migration & Strategy',
-      'AWS, Azure, GCP Solutions',
-      'CI/CD Pipeline Implementation',
-      'Infrastructure as Code (IaC)',
-      'Container Orchestration (Kubernetes)',
-      'Cloud Security & Compliance',
-    ],
-    technologies: ['AWS', 'Azure', 'Docker', 'Kubernetes', 'Terraform', 'Jenkins'],
-  },
-  {
-    id: 'ai',
-    icon: Brain,
-    title: 'AI & Machine Learning',
-    description: 'Leverage artificial intelligence and machine learning to unlock data-driven insights and automation.',
-    features: [
-      'Machine Learning Model Development',
-      'Natural Language Processing (NLP)',
-      'Computer Vision Solutions',
-      'Predictive Analytics',
-      'AI-Powered Automation',
-      'Data Engineering & Analytics',
-    ],
-    technologies: ['TensorFlow', 'PyTorch', 'Python', 'Scikit-learn', 'OpenAI', 'Hugging Face'],
-  },
-  {
-    id: 'digital',
-    icon: Zap,
-    title: 'Digital Transformation',
-    description: 'Modernize your business operations with end-to-end digital transformation strategies.',
-    features: [
-      'Business Process Automation',
-      'Digital Strategy Consulting',
-      'System Integration',
-      'Workflow Optimization',
-      'Change Management',
-      'Technology Roadmap Planning',
-    ],
-    technologies: ['Low-Code Platforms', 'RPA', 'Integration Tools', 'Analytics'],
-  },
-  {
-    id: 'consulting',
-    icon: Cog,
-    title: 'IT Consulting',
-    description: 'Expert guidance to align technology with your business objectives and drive growth.',
-    features: [
-      'Technology Assessment',
-      'Architecture Design',
-      'Security Audits',
-      'Performance Optimization',
-      'Scalability Planning',
-      'Technical Due Diligence',
-    ],
-    technologies: ['Best Practices', 'Industry Standards', 'Frameworks'],
-  },
-  {
-    id: 'staffing',
-    icon: Users,
-    title: 'IT Staff Augmentation',
-    description: 'Scale your team with skilled IT professionals to meet project demands and deadlines.',
-    features: [
-      'Dedicated Development Teams',
-      'Contract-to-Hire Options',
-      'Specialized Skill Sets',
-      'Flexible Engagement Models',
-      'Quick Onboarding',
-      'Quality Assurance',
-    ],
-    technologies: ['Full-Stack', 'Frontend', 'Backend', 'DevOps', 'QA', 'Mobile'],
-  },
-];
+const TITLE = 'Services: Salesforce, Zoho, Custom Development and Consulting';
+const DESCRIPTION =
+  'Four ways Mizra helps: Salesforce, Zoho, custom web and mobile development, and consulting. Fixed price for a defined scope; a reply in 4 business hours.';
 
-const process = [
-  {
-    step: '01',
-    title: 'Discovery',
-    description: 'Understand your business goals, challenges, and requirements',
-  },
-  {
-    step: '02',
-    title: 'Strategy',
-    description: 'Design a tailored solution architecture and implementation plan',
-  },
-  {
-    step: '03',
-    title: 'Development',
-    description: 'Build and iterate using agile methodologies with continuous feedback',
-  },
-  {
-    step: '04',
-    title: 'Delivery',
-    description: 'Deploy, test, and ensure seamless integration with your systems',
-  },
-  {
-    step: '05',
-    title: 'Support',
-    description: 'Provide ongoing maintenance, updates, and technical support',
-  },
-];
+export const metadata = pageMetadata({ path: '/services', title: TITLE, description: DESCRIPTION });
+
+const container = 'mx-auto max-w-[1200px] px-4 sm:px-8';
+// Product names keep their capitals in "More about ..."; the rest are lowercased.
+const PRODUCT_NAMES = new Set(['Salesforce', 'Zoho']);
 
 export default function ServicesPage() {
   const structuredData = {
     '@context': 'https://schema.org',
-    '@type': 'Service',
-    serviceType: 'IT Consulting Services',
-    provider: {
-      '@type': 'Organization',
-      name: 'Mizra Consulting',
-      url: 'https://mizraconsulting.com',
-    },
-    areaServed: 'Worldwide',
-    hasOfferCatalog: {
-      '@type': 'OfferCatalog',
-      name: 'IT Services',
-      itemListElement: services.map((service) => ({
-        '@type': 'Offer',
-        itemOffered: {
-          '@type': 'Service',
-          name: service.title,
-          description: service.description,
-        },
-      })),
-    },
+    '@type': 'ItemList',
+    name: 'Mizra Consulting services',
+    itemListElement: SERVICES.filter((s) => s.page).map((service, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: service.name,
+      url: `${SITE_URL}${service.page}`,
+    })),
   };
 
   return (
-    <>
+    <div className="bg-mz-cream text-[18px] leading-relaxed text-mz-ink">
       <StructuredData data={structuredData} />
-      
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 bg-gradient-to-br from-gray-50 to-beige-100">
-        <div className="container-custom text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Comprehensive IT Services
+
+      <section className="bg-mz-ink pb-16 pt-10 text-mz-cream sm:pb-20 sm:pt-12">
+        <div className={container}>
+          <nav aria-label="Breadcrumb" className="mb-6 text-sm text-mz-lilac">
+            <Link href="/" className="hover:text-mz-amber">
+              Home
+            </Link>
+            <span aria-hidden="true"> / </span>
+            <span aria-current="page">Services</span>
+          </nav>
+          <p className="mb-5 text-sm font-semibold uppercase tracking-[0.14em] text-mz-amber">What we do</p>
+          <h1 className="font-display mb-6 max-w-[820px] text-[34px] font-semibold leading-[1.12] tracking-[-0.02em] text-white sm:text-[44px] lg:text-[52px]">
+            Four ways we help. One team behind all of them.
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-            From custom software development to cloud solutions and AI implementation, 
-            we deliver technology solutions that drive business growth.
+          <p className="max-w-[640px] text-[19px] text-mz-mist sm:text-[21px]">
+            We set up Salesforce and Zoho, build the software around them, and help you think it through.
+            Every project gets a fixed scope and a written estimate before we start.
           </p>
         </div>
       </section>
 
-      {/* Services Grid */}
-      <section className="section-padding">
-        <div className="container-custom space-y-16">
-          {services.map((service, index) => (
-            <div
-              key={service.id}
-              id={service.id}
-              className={`grid lg:grid-cols-2 gap-12 items-center ${
-                index % 2 === 1 ? 'lg:flex-row-reverse' : ''
-              }`}
-            >
-              <div className={index % 2 === 1 ? 'lg:order-2' : ''}>
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-lg mb-6">
-                  <service.icon className="w-8 h-8 text-primary-500" />
-                </div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                  {service.title}
-                </h2>
-                <p className="text-lg text-gray-600 mb-6">
-                  {service.description}
-                </p>
-                <div className="space-y-3 mb-6">
-                  {service.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start space-x-3">
-                      <CheckCircle className="w-5 h-5 text-primary-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {service.technologies.map((tech, idx) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className={`card bg-gradient-to-br from-primary-50 to-beige-50 ${index % 2 === 1 ? 'lg:order-1' : ''}`}>
-                <div className="aspect-video bg-white/50 rounded-lg flex items-center justify-center">
-                  <service.icon className="w-24 h-24 text-primary-300" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Process Section */}
-      <section className="section-padding bg-gray-50">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Our Development Process
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              A clear process for quality, transparency and on-time delivery
-            </p>
-          </div>
-          <div className="grid md:grid-cols-5 gap-8">
-            {process.map((item, index) => (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 bg-primary-500 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                  {item.step}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {item.title}
-                </h3>
-                <p className="text-gray-600 text-sm">{item.description}</p>
-              </div>
+      <section className="py-16 sm:py-20">
+        <div className={container}>
+          <ul className="grid gap-6 md:grid-cols-2">
+            {SERVICES.filter((s) => s.page).map((service) => (
+              <li key={service.id}>
+                <Link
+                  href={service.page as string}
+                  className="group flex h-full flex-col rounded-[20px] border border-mz-border bg-white p-7 transition-shadow hover:shadow-lg focus-visible:shadow-lg sm:p-9"
+                >
+                  <h2 className="font-display mb-3 text-[28px] font-semibold leading-tight sm:text-[32px]">
+                    {service.name}
+                  </h2>
+                  <p className="mb-6 flex-1 text-mz-body">{service.text}</p>
+                  <span className="font-semibold text-mz-accent group-hover:underline">
+                    More about {PRODUCT_NAMES.has(service.name) ? service.name : service.name.toLowerCase()}
+                    <span aria-hidden="true">&nbsp;→</span>
+                  </span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="section-padding">
-        <div className="container-custom">
-          <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white text-center max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Let&apos;s Build Something Great Together
+      <section className="pb-20 sm:pb-24">
+        <div className={container}>
+          <div className="rounded-[28px] bg-mz-deep p-8 text-white sm:p-14">
+            <h2 className="font-display mb-3 text-[30px] font-semibold leading-[1.15] tracking-[-0.015em] sm:text-[38px]">
+              Not sure which one you need?
             </h2>
-            <p className="text-lg text-primary-100 mb-8 max-w-2xl mx-auto">
-              Ready to start your project? Get in touch with our team for a free consultation.
+            <p className="mb-7 max-w-[640px] text-[19px] text-mz-mist">
+              Send two sentences. We reply within 4 business hours.
             </p>
             <Link
-              href="/contact"
-              className="inline-flex items-center space-x-2 bg-white text-primary-500 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              href="/#start"
+              className="inline-flex min-h-[56px] items-center justify-center rounded-full bg-mz-amber px-8 text-[17px] font-semibold text-mz-ink hover:bg-[#ffbb33]"
             >
-              <span>Contact Us</span>
-              <ArrowRight className="w-5 h-5" />
+              Tell us what you need
             </Link>
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }

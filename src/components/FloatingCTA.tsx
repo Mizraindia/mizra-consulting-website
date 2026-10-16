@@ -5,12 +5,14 @@ import { usePathname } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import ContactFormModal from './ContactFormModal';
 
+const PAGES_WITH_FORM = new Set(['/', '/contact', '/salesforce', '/zoho', '/custom-development', '/consulting']);
+
 export default function FloatingCTA() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const pathname = usePathname();
 
-  // Hide on contact page
-  if (pathname === '/contact') {
+  // Hide where the enquiry form is already on the page
+  if (PAGES_WITH_FORM.has(pathname)) {
     return null;
   }
 
@@ -19,7 +21,7 @@ export default function FloatingCTA() {
       {/* Floating Button */}
       <button
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-6 right-6 z-40 bg-primary-500 hover:bg-primary-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"
+        className="fixed bottom-6 right-6 z-40 bg-mz-amber hover:bg-[#ffbb33] text-mz-ink p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"
         aria-label="Contact us"
       >
         <MessageCircle className="w-6 h-6" />

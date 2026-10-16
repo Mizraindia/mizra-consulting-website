@@ -26,8 +26,10 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(url, 301);
     }
 
-    // Redirect HTTP to HTTPS only in production
-    if (request.headers.get('x-forwarded-proto') !== 'https') {
+    // Redirect HTTP to HTTPS only in production. Skipped for localhost, which has no
+    // HTTPS, so a local production build (and its image optimiser) can be tested.
+    const isLocalhost = host.startsWith('localhost') || host.startsWith('127.0.0.1');
+    if (!isLocalhost && request.headers.get('x-forwarded-proto') !== 'https') {
       const url = request.nextUrl.clone();
       url.protocol = 'https:';
       return NextResponse.redirect(url, 301);

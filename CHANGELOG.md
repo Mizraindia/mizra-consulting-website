@@ -4,6 +4,90 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Resources go live
+
+- First article, "Salesforce vs HubSpot vs Zoho: how to choose the right CRM", at
+  `/blog/salesforce-vs-hubspot-vs-zoho`, with the owner's wording unchanged. Article,
+  FAQ and breadcrumb data for search engines, its own canonical address, the share
+  image, and a closing box that links to the enquiry form. The comparison table is a
+  table on wider screens and one card per CRM on phones.
+- `/blog` is now the Resources index (cards with title, description, read time and
+  date), open to search engines and listed in the sitemap with the article.
+- "Resources" is back in the header menu and the footer; the homepage shows the
+  Resources section again with a card for the article.
+- Articles are Markdown files in `src/content/blog/`, read at build time with `marked`
+  (build-time only; nothing extra is sent to visitors).
+
+### Phase C, step 3: Zoho, Custom development, Consulting, services overview, restyle
+
+- New `/zoho`, `/custom-development` and `/consulting` pages from the owner's workbooks,
+  using the Salesforce page template (same layout, sections and components).
+  Left out until confirmed: prices, Zoho certifications or partner status (none held),
+  Zoho products marked "some experience", demo projects, the public code repository,
+  the gym and e-commerce examples, the consulting experience line, and the plan length
+  in the typical first consulting engagement.
+- All four service pages show the owner's line next to the main button: "We match the
+  right expert to your scope: an experienced practitioner with 5 to 10+ years in the
+  field, or a specialist with 20 years when your project needs one." No personal years
+  of experience, names or profile links appear anywhere on the site.
+- Consulting: the typical first engagement ends with a prioritised 30 to 60 day plan.
+- `/services` is now a short overview in the new style linking to the four pages,
+  replacing the old cloud, AI and "digital transformation" content.
+- Header Services menu: All services, Salesforce, Zoho, Custom development, Consulting.
+  Homepage, footer and sitemap link to all four service pages.
+- About, Contact, the master-classes holding page and Privacy/Terms now use the brand
+  colours and fonts (the older colour names map to the brand palette; buttons and cards
+  restyled). Wording on the master-classes page and Privacy/Terms is unchanged,
+  checked word for word against the live site.
+- About: removed the Mission, Vision and Expertise sections and the "Innovation" value
+  (it said "cutting-edge"); the story, promises, other values and closing box remain.
+- Contact: new intro "Tell us what you need. We will reply with a plan, not a
+  brochure." and a LinkedIn card; the rest is unchanged.
+- Removed the site-wide meta keywords list, which advertised services Mizra does not
+  offer (cloud, AI, DevOps, staff augmentation, "digital transformation").
+- `/blog` is now a one-line holding page in the new style, "Resources are coming.",
+  with all old cloud, AI and "digital transformation" wording removed. It stays out of
+  the menus and the sitemap and hidden from search engines until the first article.
+
+### Phase C, step 2: Salesforce page
+
+- New `/salesforce` page from the owner's Salesforce workbook: the buyer's problems
+  and what they cost, signs a setup needs rescuing, five services (implementation,
+  migration, clean-up, integrations, ongoing support), the method, testing, training,
+  timeline (8 to 12 weeks), products and tools, three rules, data security, nine
+  questions and answers, and the enquiry form.
+- Left out until confirmed: certifications, named project leads, claims of past
+  results, prices, and the founder's personal history.
+- Shared service-page template (`src/components/ServicePage.tsx`) with content in
+  `src/content/services/`, plus search-engine data (Service, FAQ, breadcrumb).
+- Salesforce links in the menu, footer and homepage now point to `/salesforce`;
+  `/salesforce` added to the sitemap.
+- LinkedIn company page link switched on (footer, contact page, search-engine data).
+- Floating contact button recoloured to the brand and hidden on pages that already
+  have the form.
+
+### Phase C, step 1: New homepage
+
+- New homepage built from the approved design: hero with the enquiry form, "Sound
+  familiar?", the four services, the six-step project path, "How we work", the master
+  classes strip, questions and answers, and a closing banner.
+- Copy follows the owner's confirmed facts and decisions: no prices, no start-slot
+  card or badge, no class dates, titles or prices, no Resources section, and the
+  closing banner says "We reply within 4 business hours". Unconfirmed design lines
+  were left out. Copy lives in `src/content/home.ts`.
+- The four confirmed promises now appear in the hero and the project path (the
+  separate promises band is replaced by the new design).
+- New site-wide header (dark, Services menu, Master classes, How it works, Contact,
+  "Tell us what you need") and footer (services, company links, email, WhatsApp, CIN
+  and registered office). Blog and Resources links removed until the first article;
+  `/blog` is hidden from search and the sitemap but still opens.
+- Brand fonts (Poppins, Instrument Sans) served from the site; brand colours added.
+- The homepage FAQ is marked up for search engines (FAQPage).
+- Accessibility: "Skip to content" link, labelled menu button, 44px tap targets in the
+  footer, jump links clear the sticky header, smooth scrolling respects "reduce motion".
+- The HTTPS redirect now skips `localhost`, so a production build can be tested on a
+  computer (Vercel already enforces HTTPS).
+
 ### Phase B: Clean-up
 
 **Client claims removed (B1)**

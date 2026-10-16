@@ -1,78 +1,79 @@
-import { pageMetadata } from '@/lib/metadata';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import StructuredData from '@/components/StructuredData';
+import { formatDate, getAllPosts } from '@/lib/blog';
+import { pageMetadata } from '@/lib/metadata';
+import { SITE_URL } from '@/lib/site';
 
+// Resources index: one card per article in src/content/blog, newest first.
 export const metadata = pageMetadata({
   path: '/blog',
-  title: 'Blog - IT Insights, Tech Trends & Best Practices',
+  title: 'Resources',
   description:
-    'Stay updated with the latest insights on software development, cloud computing, AI/ML, and digital transformation from Mizra Consulting experts.',
+    'Straight answers to the questions people ask before choosing a CRM or starting a software project, from the Mizra Consulting team.',
 });
 
 export default function BlogPage() {
+  const posts = getAllPosts();
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Mizra Consulting resources',
+    itemListElement: posts.map((post, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: post.title,
+      url: `${SITE_URL}/blog/${post.slug}`,
+    })),
+  };
+
   return (
-    <>
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 bg-gradient-to-br from-gray-50 to-beige-100">
-        <div className="container-custom text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Blog & Insights
+    <div className="bg-mz-cream text-[18px] leading-relaxed text-mz-ink">
+      <StructuredData data={structuredData} />
+
+      <section className="bg-mz-ink pb-14 pt-10 text-mz-cream sm:pb-16 sm:pt-12">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-8">
+          <nav aria-label="Breadcrumb" className="mb-6 text-sm text-mz-lilac">
+            <Link href="/" className="hover:text-mz-amber">
+              Home
+            </Link>
+            <span aria-hidden="true"> / </span>
+            <span aria-current="page">Resources</span>
+          </nav>
+          <h1 className="font-display mb-5 text-[34px] font-semibold leading-[1.12] tracking-[-0.02em] text-white sm:text-[44px] lg:text-[52px]">
+            Resources
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-            Expert insights on software development, cloud solutions, AI/ML, and digital transformation
+          <p className="max-w-[640px] text-[19px] text-mz-mist sm:text-[21px]">
+            Straight answers to the questions everyone asks us.
           </p>
         </div>
       </section>
 
-      {/* Coming Soon Section */}
-      <section className="section-padding">
-        <div className="container-custom">
-          <div className="card bg-gradient-to-br from-primary-50 to-beige-50 text-center max-w-3xl mx-auto">
-            <div className="text-6xl mb-6">📝</div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Blog Coming Soon
-            </h2>
-            <p className="text-lg text-gray-600 mb-8">
-              We&apos;re working on bringing you valuable insights, tutorials, and industry best practices. 
-              This section will be integrated for regular updates on technology trends, 
-              case studies, and expert opinions.
-            </p>
-            <div className="space-y-4 text-left max-w-md mx-auto mb-8">
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-white text-sm">✓</span>
-                </div>
-                <p className="text-gray-700">Technical tutorials and how-to guides</p>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-white text-sm">✓</span>
-                </div>
-                <p className="text-gray-700">Industry trends and analysis</p>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-white text-sm">✓</span>
-                </div>
-                <p className="text-gray-700">Case studies and success stories</p>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-white text-sm">✓</span>
-                </div>
-                <p className="text-gray-700">Best practices and expert tips</p>
-              </div>
-            </div>
-            <Link
-              href="/contact"
-              className="inline-flex items-center space-x-2 bg-primary-500 text-white px-8 py-4 rounded-lg font-semibold hover:bg-primary-600 transition-colors"
-            >
-              <span>Contact Us for Updates</span>
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-          </div>
+      <section className="py-14 sm:py-20">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-8">
+          <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {posts.map((post) => (
+              <li key={post.slug}>
+                <Link
+                  href={`/blog/${post.slug}`}
+                  className="flex h-full flex-col rounded-[20px] border border-mz-border bg-white p-7 transition-shadow hover:shadow-lg focus-visible:shadow-lg"
+                >
+                  <p className="mb-3 font-sans text-sm font-semibold uppercase tracking-[0.12em] text-mz-accent">
+                    {post.category}
+                  </p>
+                  <h2 className="font-display mb-3 text-[24px] font-semibold leading-[1.3]">{post.title}</h2>
+                  <p className="mb-6 flex-1 text-[17px] text-mz-body">{post.description}</p>
+                  <p className="text-[15px] text-mz-muted">
+                    {post.readTime}
+                    <span aria-hidden="true"> · </span>
+                    <time dateTime={post.date}>{formatDate(post.date)}</time>
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
-    </>
+    </div>
   );
 }

@@ -6,24 +6,42 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* Keep jump-link targets clear of the sticky header */
+  [id] {
+    scroll-margin-top: 80px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
   
   body {
     @apply bg-white text-gray-900 antialiased;
   }
+
+  /* Headings use the brand display font; components that want the body font say so (font-sans). */
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
 }
 
 @layer components {
-  /* Button Styles */
+  /* Button Styles (brand: rounded, violet) */
   .btn-primary {
-    @apply bg-primary-500 hover:bg-primary-600 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg;
+    @apply inline-flex min-h-[48px] items-center justify-center rounded-full bg-primary-500 px-6 py-3 font-semibold text-white transition-colors duration-300 hover:bg-primary-600;
   }
-  
+
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-primary-500 font-semibold px-6 py-3 rounded-lg border-2 border-primary-500 transition-all duration-300;
+    @apply inline-flex min-h-[48px] items-center justify-center rounded-full border-2 border-primary-500 bg-white px-6 py-3 font-semibold text-primary-500 transition-colors duration-300 hover:bg-primary-50;
   }
-  
+
   .btn-outline {
-    @apply bg-transparent hover:bg-primary-50 text-primary-500 font-semibold px-6 py-3 rounded-lg border-2 border-primary-500 transition-all duration-300;
+    @apply inline-flex min-h-[48px] items-center justify-center rounded-full border-2 border-primary-500 bg-transparent px-6 py-3 font-semibold text-primary-500 transition-colors duration-300 hover:bg-primary-50;
   }
   
   /* Section Styles */
@@ -54,7 +72,7 @@
   
   /* Card Styles */
   .card {
-    @apply bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 p-6;
+    @apply rounded-[20px] border border-mz-border bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg;
   }
   
   /* Input Styles */

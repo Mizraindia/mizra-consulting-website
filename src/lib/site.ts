@@ -11,8 +11,8 @@ export const COMPANY = {
   privacyEmail: 'privacy@mizraconsulting.com',
   whatsappDisplay: '+91 92057 10374',
   whatsappUrl: 'https://wa.me/919205710374',
-  // Set to the real company page address once it exists. The link is hidden while this is null.
-  linkedinUrl: null as string | null,
+  // Owner confirmed 15 October 2026. Set to null to hide the link everywhere.
+  linkedinUrl: 'https://www.linkedin.com/company/mizraconsulting' as string | null,
   address: {
     street: '7th Floor, Palm Court, 704, Mehrauli Gurugram Road',
     city: 'Gurugram',
@@ -21,6 +21,17 @@ export const COMPANY = {
   },
   hours: '9 am to 7 pm India time (IST), Monday to Friday',
 };
+
+/** The four services, each with its own page. */
+export const SERVICE_LINKS = [
+  { name: 'Salesforce', href: '/salesforce' },
+  { name: 'Zoho', href: '/zoho' },
+  { name: 'Custom development', href: '/custom-development' },
+  { name: 'Consulting', href: '/consulting' },
+];
+
+/** The header's Services menu: an overview first, then each service. */
+export const SERVICES_MENU = [{ name: 'All services', href: '/services' }, ...SERVICE_LINKS];
 
 export const ADDRESS_ONE_LINE = `${COMPANY.address.street}, ${COMPANY.address.city} ${COMPANY.address.postalCode}, ${COMPANY.address.country}`;
 

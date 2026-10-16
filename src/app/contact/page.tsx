@@ -52,14 +52,13 @@ export default function ContactPage() {
     <>
       <StructuredData data={structuredData} />
 
-      <section className="pt-32 pb-20 bg-gradient-to-br from-gray-50 to-beige-100">
+      <section className="pt-16 pb-20 bg-gradient-to-br from-gray-50 to-beige-100">
         <div className="container-custom text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Get in Touch
           </h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-            Ready to transform your business with innovative IT solutions? 
-            Let&apos;s start a conversation.
+            Tell us what you need. We will reply with a plan, not a brochure.
           </p>
         </div>
       </section>
