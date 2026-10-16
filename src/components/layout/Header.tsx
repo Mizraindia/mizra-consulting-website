@@ -9,6 +9,7 @@ import { SERVICES_MENU } from '@/lib/site';
 const navigation = [
   { name: 'Master classes', href: '/student-portal' },
   { name: 'How it works', href: '/#path' },
+  { name: 'Resources', href: '/blog' },
   { name: 'Contact', href: '/contact' },
 ];
 

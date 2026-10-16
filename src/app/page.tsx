@@ -4,6 +4,7 @@ import StructuredData from '@/components/StructuredData';
 import ContactForm from '@/components/ContactForm';
 import { organizationData } from '@/lib/site';
 import { pageMetadata } from '@/lib/metadata';
+import { getAllPosts } from '@/lib/blog';
 import {
   CLASS_TOPICS_SHOWN,
   COST_OF_WAITING,
@@ -29,6 +30,7 @@ const eyebrow = 'mb-4 text-sm font-semibold uppercase tracking-[0.14em]';
 const sectionHeading = 'font-display text-[30px] font-semibold leading-[1.2] tracking-[-0.015em] sm:text-[40px]';
 
 export default function HomePage() {
+  const posts = getAllPosts().slice(0, 3);
   const structuredData = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -239,6 +241,38 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* Resources: the latest articles */}
+      {posts.length > 0 && (
+        <section id="resources" className="bg-white py-20 sm:py-[104px]">
+          <div className={container}>
+            <p className={`${eyebrow} text-mz-accent`}>Resources</p>
+            <h2 className={`${sectionHeading} mb-12 max-w-[780px]`}>
+              Straight answers to the questions everyone asks us.
+            </h2>
+            <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post) => (
+                <li key={post.slug}>
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="flex h-full flex-col rounded-[20px] bg-mz-cream p-[30px] transition-shadow hover:shadow-lg focus-visible:shadow-lg"
+                  >
+                    <h3 className="font-display mb-3 text-2xl font-semibold leading-[1.3]">{post.title}</h3>
+                    <p className="mb-5 flex-1 text-[17px] text-mz-body">{post.description}</p>
+                    <p className="text-[15px] text-mz-muted">{post.readTime}</p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/blog"
+              className="mt-10 inline-block py-2.5 font-semibold text-mz-accent hover:underline"
+            >
+              All resources<span aria-hidden="true">&nbsp;→</span>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* FAQ */}
       <section id="faq" className="py-20 sm:py-[104px]">

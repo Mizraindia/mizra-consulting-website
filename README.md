@@ -77,7 +77,17 @@ publishes always-pass Turnstile test keys for local use.
 | `/about` | About |
 | `/contact` | Enquiry form, email, WhatsApp, registered office |
 | `/student-portal` | "Master classes are coming" holding page with sign-up |
-| `/blog` | "Resources are coming." holding page; hidden from menus, search and the sitemap until the first article |
+| `/blog` | Resources index; lists every article in `src/content/blog/` |
+| `/blog/<slug>` | One page per article (Markdown in `src/content/blog/`) |
+
+### Publishing an article
+
+Add a Markdown file to `src/content/blog/` with the front matter described at the top of
+`src/lib/blog.ts` (title, slug, description, date, category, readTime, author). It appears
+on `/blog`, on the homepage (latest three), and in the sitemap automatically. A
+`## Questions people ask` section becomes FAQ data for search engines, and a final
+`## Still not sure?` section becomes the closing box that links to the enquiry form.
+Check the wording for prices, placeholders and banned words before publishing.
 | `/privacy`, `/terms` | Drafts awaiting lawyer review; kept out of search results and the sitemap |
 
 Redirects (permanent): `/home` to `/`, `/industries` to `/services`, `/faq` to `/contact`.

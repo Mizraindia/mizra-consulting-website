@@ -4,6 +4,20 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Resources go live
+
+- First article, "Salesforce vs HubSpot vs Zoho: how to choose the right CRM", at
+  `/blog/salesforce-vs-hubspot-vs-zoho`, with the owner's wording unchanged. Article,
+  FAQ and breadcrumb data for search engines, its own canonical address, the share
+  image, and a closing box that links to the enquiry form. The comparison table is a
+  table on wider screens and one card per CRM on phones.
+- `/blog` is now the Resources index (cards with title, description, read time and
+  date), open to search engines and listed in the sitemap with the article.
+- "Resources" is back in the header menu and the footer; the homepage shows the
+  Resources section again with a card for the article.
+- Articles are Markdown files in `src/content/blog/`, read at build time with `marked`
+  (build-time only; nothing extra is sent to visitors).
+
 ### Phase C, step 3: Zoho, Custom development, Consulting, services overview, restyle
 
 - New `/zoho`, `/custom-development` and `/consulting` pages from the owner's workbooks,

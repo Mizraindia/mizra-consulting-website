@@ -3,10 +3,10 @@ import Image from 'next/image';
 import { ADDRESS_ONE_LINE, COMPANY, SERVICE_LINKS } from '@/lib/site';
 import { CookieSettingsButton } from '@/components/Analytics';
 
-// Resources is left out until the first article is published (owner decision, Phase C).
 const companyLinks = [
   { name: 'How it works', href: '/#path' },
   { name: 'Master classes', href: '/student-portal' },
+  { name: 'Resources', href: '/blog' },
   { name: 'About', href: '/about' },
   { name: 'Contact', href: '/contact' },
 ];
