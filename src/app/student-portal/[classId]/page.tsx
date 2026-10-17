@@ -8,8 +8,9 @@ import { pageMetadata } from '@/lib/metadata';
 import { SITE_URL, organizationData } from '@/lib/site';
 
 // One master class: details, Event data for search engines, and the registration form.
-// Exists only while registration is switched on; refreshed from the sheet at most once a minute.
-export const revalidate = 60;
+// Exists only while registration is switched on; refreshed from the sheet every 10 seconds
+// so "seats left" stays fresh. Must match CLASS_DATA_SECONDS in lib/classes.
+export const revalidate = 10;
 
 type Params = { params: Promise<{ classId: string }> };
 
@@ -101,7 +102,7 @@ export default async function ClassPage({ params }: Params) {
               </div>
               <div>
                 <dt className="inline font-semibold text-mz-ink">Seats: </dt>
-                <dd className="inline">{cls.seatsLeft > 0 ? `${cls.seatsLeft} of ${cls.seats} left` : 'Full'}</dd>
+                <dd className="inline">{cls.seatsLeft > 0 ? `${cls.seatsLeft} of ${cls.seats} left` : 'Full (waiting list open)'}</dd>
               </div>
               <div>
                 <dt className="inline font-semibold text-mz-ink">Price: </dt>
@@ -113,18 +114,12 @@ export default async function ClassPage({ params }: Params) {
           </div>
 
           <div className="w-full min-w-0 flex-[1_1_360px] rounded-[20px] border border-mz-border bg-white p-6 sm:p-7">
-            {cls.seatsLeft > 0 ? (
-              <RegistrationForm classId={cls.id} classTitle={cls.title} priceUsd={cls.priceUsd} />
-            ) : (
-              <div>
-                <h2 className="mb-2 font-display text-2xl font-semibold">This class is full</h2>
-                <p className="mb-5 text-mz-body">
-                  <Link href="/student-portal" className="font-semibold text-mz-accent underline">
-                    See other classes
-                  </Link>
-                </p>
-              </div>
-            )}
+            <RegistrationForm
+              classId={cls.id}
+              classTitle={cls.title}
+              priceUsd={cls.priceUsd}
+              full={cls.seatsLeft <= 0}
+            />
           </div>
         </div>
       </section>

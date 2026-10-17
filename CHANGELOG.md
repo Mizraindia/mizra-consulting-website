@@ -4,6 +4,21 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Phase D, stage 3: free classes, waiting list, reminders, cancel links (registration still switched OFF)
+
+- Master classes are free for now: the holding page and the FAQ say "Classes are free for now", and
+  a class with price 0 shows "Free". Free classes need no Razorpay settings; the payment code stays
+  in place, unused. Refund and Shipping policy pages are not needed while classes are free.
+- Waiting list: a full class shows "Full (waiting list open)" and a "Join the waiting list" form.
+  When someone cancels, the first person waiting gets the place and the join link by email.
+- Every class email has a cancel link to `/student-portal/cancel`, which shows the class and
+  cancels only when the button is pressed. The confirmation email has one line about cancelling.
+- Reminder emails 24 hours and 1 hour before each class, each sent once, from a 15-minute timer
+  in the classes script. The owner is emailed if the daily email allowance runs short.
+- "Seats left" and the class list refresh from the sheet every 10 seconds (was 60).
+- The script needs a new `SITE_URL` property and `setup` run again; see `CLASSES-SETUP.md`.
+- 8 new tests (27 in total, `npm run test:scripts`).
+
 ### Phase D, stage 2: payment with Razorpay (registration still switched OFF)
 
 - Paid classes: the seat is held for 30 minutes as "awaiting payment", the visitor pays on a

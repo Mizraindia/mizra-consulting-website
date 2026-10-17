@@ -29,10 +29,13 @@ export default function RegistrationForm({
   classId,
   classTitle,
   priceUsd = 0,
+  full = false,
 }: {
   classId: string;
   classTitle: string;
   priceUsd?: number;
+  /** No seats left: the form joins the waiting list instead. */
+  full?: boolean;
 }) {
   const [who, setWho] = useState<Who>('self');
   const [fields, setFields] = useState({ name: '', email: '', whatsapp: '', studentFirstName: '' });
@@ -40,7 +43,7 @@ export default function RegistrationForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
-  const [done, setDone] = useState<{ emailed: boolean } | null>(null);
+  const [done, setDone] = useState<{ emailed: boolean; waitlisted: boolean } | null>(null);
   const [redirecting, setRedirecting] = useState(false);
   const [startedAt] = useState(() => Date.now());
   const successHeading = useRef<HTMLHeadingElement>(null);
@@ -94,8 +97,9 @@ export default function RegistrationForm({
         return;
       }
       if (res.ok && reply.ok) {
-        trackEvent('class_registration', { class_id: classId });
-        setDone({ emailed: reply.emailed !== false });
+        const waitlisted = reply.status === 'waitlisted';
+        trackEvent(waitlisted ? 'class_waitlist' : 'class_registration', { class_id: classId });
+        setDone({ emailed: reply.emailed !== false, waitlisted });
         return;
       }
       if (reply.error === 'invalid' && reply.fields && Object.keys(reply.fields).length > 0) setFieldErrors(reply.fields);
@@ -113,12 +117,14 @@ export default function RegistrationForm({
       <div role="status" className="py-3 text-center">
         <CheckCircle className="mx-auto h-11 w-11 text-mz-accent" aria-hidden="true" />
         <h2 ref={successHeading} tabIndex={-1} className="mb-2 mt-4 font-display text-[26px] font-semibold leading-tight outline-none">
-          You are registered.
+          {done.waitlisted ? 'You are on the waiting list.' : 'You are registered.'}
         </h2>
         <p className="mb-5 text-mz-body">
-          {done.emailed
-            ? `We have emailed your join link and a calendar invite to ${fields.email}.`
-            : `Your place is saved, but we could not send your confirmation email just now. We will email your join link to ${fields.email} shortly.`}
+          {done.waitlisted
+            ? `If a place opens up, we will email the join link to ${fields.email} straight away. You do not need to do anything else.`
+            : done.emailed
+              ? `We have emailed your join link and a calendar invite to ${fields.email}.`
+              : `Your place is saved, but we could not send your confirmation email just now. We will email your join link to ${fields.email} shortly.`}
         </p>
         <Link
           href="/student-portal"
@@ -135,7 +141,9 @@ export default function RegistrationForm({
   return (
     <form method="post" onSubmit={handleSubmit} noValidate className="relative">
       <HoneypotField />
-      <p className="mb-1 font-sans text-[13px] font-semibold uppercase tracking-[0.14em] text-mz-accent">Register for</p>
+      <p className="mb-1 font-sans text-[13px] font-semibold uppercase tracking-[0.14em] text-mz-accent">
+        {full ? 'Waiting list for' : 'Register for'}
+      </p>
       <h2 className="mb-5 font-display text-2xl font-semibold leading-tight">{classTitle}</h2>
 
       <fieldset className="mb-4" aria-describedby={fieldErrors.registrantType ? 'reg-registrantType-error' : undefined}>
@@ -232,11 +240,18 @@ export default function RegistrationForm({
           ? 'Taking you to secure payment...'
           : sending
             ? 'Registering...'
-            : priceUsd > 0
-              ? `Continue to payment ($${priceUsd})`
-              : 'Register'}
+            : full
+              ? 'Join the waiting list'
+              : priceUsd > 0
+                ? `Continue to payment ($${priceUsd})`
+                : 'Register'}
       </button>
-      {priceUsd > 0 && (
+      {full && (
+        <p className="mt-3 text-[13px] text-mz-muted">
+          This class is full. Join the waiting list and we will email you the join link if a place opens up.
+        </p>
+      )}
+      {priceUsd > 0 && !full && (
         <p className="mt-3 text-[13px] text-mz-muted">
           You pay ${priceUsd} securely on Razorpay&apos;s payment page. Your seat is held for 30 minutes while you pay.
           Full refund until 24 hours before the class; after that, we offer a place in the next class instead.

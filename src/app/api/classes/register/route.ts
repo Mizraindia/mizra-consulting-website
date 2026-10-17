@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
     source: text(body.source, 200),
   });
 
-  if (reply.ok && reply.status === 'registered') {
-    return NextResponse.json({ ok: true, status: 'registered', emailed: reply.emailed !== false });
+  if (reply.ok && (reply.status === 'registered' || reply.status === 'waitlisted')) {
+    return NextResponse.json({ ok: true, status: reply.status, emailed: reply.emailed !== false });
   }
   if (reply.ok && reply.status === 'awaiting_payment') {
     // The seat is held for 30 minutes. Send the visitor to Razorpay's secure payment page.

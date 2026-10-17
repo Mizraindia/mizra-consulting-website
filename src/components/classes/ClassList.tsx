@@ -55,14 +55,14 @@ export default function ClassList({ classes }: { classes: PublicClass[] }) {
                     <LocalTime iso={c.startUtc} /> · {c.durationMinutes} minutes
                   </p>
                   <p className="text-[15px] text-mz-body">
-                    {c.seatsLeft > 0 ? `${c.seatsLeft} of ${c.seats} seats left` : 'Full'} · {priceLabel(c.priceUsd)}
+                    {c.seatsLeft > 0 ? `${c.seatsLeft} of ${c.seats} seats left` : 'Full · waiting list open'} · {priceLabel(c.priceUsd)}
                   </p>
                 </div>
                 <Link
                   href={`/student-portal/${c.id}`}
                   className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-mz-accent px-6 text-[15px] font-semibold text-white hover:bg-mz-deep"
                 >
-                  {c.seatsLeft > 0 ? 'View and register' : 'View class'}
+                  {c.seatsLeft > 0 ? 'View and register' : 'Join the waiting list'}
                   <span className="sr-only">: {c.title}</span>
                 </Link>
               </article>

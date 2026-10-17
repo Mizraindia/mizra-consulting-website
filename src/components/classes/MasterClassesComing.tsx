@@ -14,7 +14,7 @@ export default function MasterClassesComing() {
         </h1>
         <p className="mt-6 text-lg text-gray-600 leading-relaxed">
           Live online classes in product management, product ownership, HR and more, taught by a
-          practising product owner. Each class is $10. Leave your email and we&apos;ll tell you as
+          practising product owner. Classes are free for now. Leave your email and we&apos;ll tell you as
           soon as dates are open for registration.
         </p>
         <div className="mt-10">

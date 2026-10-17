@@ -31,7 +31,7 @@ Setting names are listed in `.env.example`. Real values live in Vercel
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile bot check. Create the widget in **Invisible** mode; the visible widget is 300px wide and crowds the forms on small phones | No (off when empty) |
 | `CLASS_REGISTRATION_OPEN` | `true` switches the master classes portal on; otherwise "Master classes are coming" | No (off when unset) |
 | `CLASSES_SCRIPT_URL`, `CLASSES_SCRIPT_SECRET` | Classes sheet script (separate from leads); see `integrations/google-apps-script/CLASSES-SETUP.md` | When the portal is on |
-| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | Razorpay for paid classes (test keys on Preview). Paid classes cannot be booked until all three are set | For paid classes |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | Razorpay for paid classes (test keys on Preview). Paid classes cannot be booked until all three are set; free classes (price 0) need none | For paid classes only |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics 4 measurement ID (`G-...`) | No (analytics and the consent banner are off when empty) |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Google Search Console HTML-tag code | No |
 | `NEXT_PUBLIC_BING_SITE_VERIFICATION` | Bing Webmaster Tools HTML-tag code | No |
@@ -50,8 +50,11 @@ live in `src/lib/site.ts`. Change them there, not in each page.
   emails the owner and sends the visitor an auto-reply. The site shows "success" only
   when the script answers `{"ok": true}`; otherwise the visitor sees an error with the
   email address, and what they typed is kept.
-- `/api/contact/razorpay-webhook` is disabled (rejects everything) until the verified
-  master-class payment flow replaces it.
+- Master classes: `/api/classes/register` (registration or waiting list),
+  `/api/classes/cancel` (cancel by the private token in every class email, POST only) and
+  `/api/classes/razorpay-webhook` (verified payments; unused while classes are free).
+  Reminder emails 24 hours and 1 hour before each class are sent by the classes script's
+  15-minute timer, not by the website.
 
 To test forms locally, point `LEADS_SHEET_URL` at a test copy of the sheet's script
 (never the live sheet), or at a local stand-in that answers `{"ok": true}`. Cloudflare

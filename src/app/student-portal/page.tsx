@@ -7,8 +7,8 @@ import { pageMetadata } from '@/lib/metadata';
 
 // Master classes portal (Phase D). While CLASS_REGISTRATION_OPEN is not "true" this shows
 // the "Master classes are coming" holding page, and nothing is fetched from the classes sheet.
-// The class list is refreshed from the sheet at most once a minute.
-export const revalidate = 60;
+// The class list is refreshed from the sheet every 10 seconds (matches CLASS_DATA_SECONDS).
+export const revalidate = 10;
 
 export function generateMetadata() {
   return isRegistrationOpen()
@@ -22,7 +22,7 @@ export function generateMetadata() {
         path: '/student-portal',
         title: 'Master Classes Are Coming',
         description:
-          'Live online master classes from Mizra Consulting in product management, product ownership, HR and more. $10 per class. Leave your email to hear when registration opens.',
+          'Live online master classes from Mizra Consulting in product management, product ownership, HR and more. Free for now. Leave your email to hear when registration opens.',
       });
 }
 
@@ -38,7 +38,7 @@ const FAQ = [
     q: 'Do I need an account to register?',
     a: 'No. Your name, email and WhatsApp number are enough. Students under 18 are registered by a parent or guardian, who receives all messages.',
   },
-  { q: 'How much does a class cost?', a: 'Each master class is $10 per student.' },
+  { q: 'How much does a class cost?', a: 'Classes are free for now.' },
   {
     q: 'Which time zone are the classes in?',
     a: 'Every class time is shown in your own time zone, with the UTC offset, so you always see when it starts for you.',

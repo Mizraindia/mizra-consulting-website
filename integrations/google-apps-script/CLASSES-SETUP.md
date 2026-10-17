@@ -18,22 +18,27 @@ Create both with the **Google Workspace** account that should send the class ema
    from GitHub (open the file, click **Raw**, select all, copy). Click **Save** (disk icon).
 4. Click **Project Settings** (gear, left). Tick **Show "appsscript.json" manifest file in editor**.
    Go back to **Editor**, open `appsscript.json`, and set `"timeZone": "Asia/Kolkata"`. Save.
-5. **Project Settings → Script Properties → Add script property**, twice:
+5. **Project Settings → Script Properties → Add script property**, three times:
    - `SHARED_SECRET`: a long random password (32+ characters) from your password manager's generator.
      Use a **different** one for TEST and LIVE. Do not paste it into chat or email.
    - `OWNER_EMAIL`: the inbox that should receive replies, for example `info@mizraconsulting.com`.
+   - `SITE_URL`: where the cancel links in emails point. LIVE: `https://mizraconsulting.com`.
+     TEST: your `revamp` preview address from Vercel (Deployments → newest `revamp` deployment →
+     the address under **Domains** that contains `git-revamp`), without a slash at the end.
    Click **Save script properties**.
 6. Back in **Editor**, choose **setup** in the function list at the top and click **Run**.
    Approve the permissions with the same Google account. If Google says the app isn't verified,
    click **Advanced → Go to Mizra classes (unsafe)**; it is your own script.
-   The sheet now has two tabs, **Classes** and **Registrations**.
+   The sheet now has two tabs, **Classes** and **Registrations**, and a timer that checks every
+   15 minutes for reminder emails to send (see **Triggers**, the clock icon on the left).
 7. Click **Deploy → New deployment**. Click the gear next to "Select type" and choose **Web app**.
    - Description: `v1`
    - Execute as: **Me**
    - Who has access: **Anyone**
    Click **Deploy** and copy the **Web app URL** (it ends in `/exec`).
 
-**Whenever the script code changes later:** paste the new code, save, then
+**Whenever the script code changes later:** paste the new code, save, run **setup** once more
+(it adds any new columns and the reminder timer, and never creates a second timer), then
 **Deploy → Manage deployments → pencil icon → Version: New version → Deploy**. The web address stays
 the same. Without this step the old version keeps running.
 
@@ -49,13 +54,27 @@ One row per class. Never put a sample or test class in the LIVE sheet.
 | Start (India time) | Date and time in India time, for example `2026-11-21 19:00` |
 | Duration (minutes) | For example `90` |
 | Seats | For example `100` |
-| Price (USD) | `10` (or `0` for a free class) |
+| Price (USD) | `0` for now (classes are free; the website shows "Free") |
 | Meet link (private) | The Google Meet link. Never shown on the website; sent only by email. |
 | Status | `open` to show it on the site, `closed` to hide it |
 | Description (optional) | A short description, or leave empty |
 
 A class appears on the website only when every column except Description is filled, the status is
-`open` and the start time is in the future. Changes show on the website within about a minute.
+`open` and the start time is in the future. Changes, including the "seats left" number, show on the
+website within about 10 seconds (reload the page to see them).
+
+**Emails the script sends by itself**
+
+- Confirmation (join link, calendar file, cancel link) as soon as someone registers.
+- Waiting list: when a class is full, people can join the waiting list. If someone cancels, the first
+  person on the list gets the place automatically and is emailed the join link.
+- Reminders 24 hours and 1 hour before the class, each sent once. Someone who registers less than
+  24 hours before the class gets only the 1-hour reminder. The **Reminder 24h** and **Reminder 1h**
+  columns show "sent".
+- Every email has a cancel link. Opening it shows the class and a button; nothing is cancelled until
+  the button is pressed. Cancelling still works after you switch registration off.
+- If the day's email allowance is nearly used up, you get an email saying how many reminders could
+  not be sent.
 
 ## 3. Settings in Vercel
 
@@ -82,16 +101,27 @@ status `open`. (Paid classes need the payment stage.)
 4. The Registrations tab has your row, with **Confirmation email: yes**.
 5. Register again with the same email: "This email is already registered for this class."
 6. Choose **My child (under 18)** with another email: the row shows "parent or guardian" and only the child's first name.
-7. Set **Seats** to the number of rows already registered: within a minute the class shows **Full**.
-8. Set **Status** to `closed`: within a minute the class disappears.
-9. On the class page press Ctrl+F and search `meet.google`: nothing is found.
+7. Set **Seats** to the number of rows already registered: within about 10 seconds (reload) the class
+   shows **Full (waiting list open)** and the button says **Join the waiting list**.
+8. Join the waiting list with a third email you can read: "You are on the waiting list." The email
+   has no join link, only a link to leave the list. The row says **waitlisted**.
+9. Open the cancel link from your first confirmation email and press **Cancel my place**. Your row
+   says **cancelled**; the waiting-list row changes to **registered** and that inbox gets
+   "a place opened up" with the join link.
+10. Open the same cancel link again: "This place is already cancelled."
+11. Reminders: add a class starting about 2 hours from now and register. Within about 1 hour 15 minutes
+    the "Starting soon" email arrives and **Reminder 1h** says "sent". (A class 1 to 2 days ahead tests
+    the 24-hour reminder.)
+12. Set **Status** to `closed`: within about 10 seconds (reload) the class disappears.
+13. On the class page press Ctrl+F and search `meet.google`: nothing is found.
 
 On the live site, `/student-portal` must still say "Master classes are coming" until
 `CLASS_REGISTRATION_OPEN` is set to `true` for Production and the site is redeployed.
 
-## 5. Razorpay for paid classes (test mode first)
+## 5. Razorpay for paid classes (not needed while classes are free)
 
-Paid classes cannot be booked until all three Razorpay settings exist. Use **Test Mode** keys
+Classes are free for now, so skip this section; free classes need no Razorpay settings. The payment
+code stays in place, unused, for later. Paid classes cannot be booked until all three Razorpay settings exist. Use **Test Mode** keys
 for Preview and **Live Mode** keys for Production. Never paste a key secret into chat or email.
 
 **Check that USD payments are enabled**

@@ -62,9 +62,12 @@ function formatDate(date, tz, pattern) {
   return `${parts.weekday} ${Number(parts.day)} ${monthName} ${parts.year}, ${h % 12 || 12}:${parts.minute} ${h < 12 ? 'AM' : 'PM'}`;
 }
 
-function load({ lockFree = true } = {}) {
+const uuidFor = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+
+function load({ lockFree = true, quota = 1000 } = {}) {
   const sheets = {};
   const sent = [];
+  const triggers = [];
   let uuid = 0;
   const book = {
     setSpreadsheetTimeZone() {},
@@ -80,11 +83,26 @@ function load({ lockFree = true } = {}) {
       flush() {},
       newDataValidation: () => ({ requireValueInList() { return this; }, setAllowInvalid() { return this; }, build() { return {}; } }),
     },
-    LockService: { getScriptLock: () => ({ tryLock: () => lockFree, releaseLock() {} }) },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => ({ SHARED_SECRET: SECRET, OWNER_EMAIL: 'owner@example.com' })[k] ?? null }) },
-    MailApp: { sendEmail: (m) => sent.push(m) },
+    LockService: {
+      getScriptLock: () => ({ tryLock: () => lockFree, releaseLock() {} }),
+      getDocumentLock: () => ({ tryLock: () => true, releaseLock() {} }),
+    },
+    PropertiesService: {
+      getScriptProperties: () => ({
+        getProperty: (k) => ({ SHARED_SECRET: SECRET, OWNER_EMAIL: 'owner@example.com', SITE_URL: 'https://example.test/' })[k] ?? null,
+      }),
+    },
+    MailApp: { sendEmail: (m) => sent.push(m), getRemainingDailyQuota: () => quota },
+    ScriptApp: {
+      getProjectTriggers: () => triggers,
+      newTrigger: (handler) => {
+        const t = { handler, getHandlerFunction: () => handler };
+        const chain = { timeBased: () => chain, everyMinutes: (m) => { t.minutes = m; return chain; }, create: () => { triggers.push(t); return t; } };
+        return chain;
+      },
+    },
     Utilities: {
-      getUuid: () => `uuid-${++uuid}`,
+      getUuid: () => uuidFor(++uuid),
       newBlob: (content, type, name) => ({ content, type, name }),
       formatDate: (date, tz, pattern) => {
         new Intl.DateTimeFormat('en', { timeZone: tz }); // throws on an unknown zone, like Apps Script
@@ -100,7 +118,7 @@ function load({ lockFree = true } = {}) {
   vm.runInContext(SOURCE, context);
   context.setup();
   const call = (body) => context.doPost({ postData: { contents: JSON.stringify(body) } }).body;
-  return { sheets, sent, call, context };
+  return { sheets, sent, call, context, triggers };
 }
 
 function addClass(env, overrides = {}) {
@@ -159,7 +177,7 @@ test('registers, saves the row and emails the Meet link with a calendar file', (
   assert.equal(row[3], 'self');
   assert.equal(row[5], 'asha@example.com');
   assert.equal(row[8], 'registered');
-  assert.equal(row[10], 'uuid-1');
+  assert.equal(row[10], uuidFor(1));
   assert.equal(row[13], 'Europe/London');
   assert.equal(row[15], 'yes');
 
@@ -196,13 +214,19 @@ test('one registration per email per class, ignoring letter case', () => {
   assert.equal(env.call(person({ email: 'ASHA@example.com' })).error, 'duplicate');
 });
 
-test('never sells more seats than the class has', () => {
+test('never sells more seats than the class has; the next person joins the waiting list', () => {
   const env = load();
-  addClass(env, { seats: 2 });
-  assert.equal(env.call(person({ email: 'a@example.com' })).ok, true);
-  assert.equal(env.call(person({ email: 'b@example.com' })).ok, true);
-  assert.equal(env.call(person({ email: 'c@example.com' })).error, 'full');
-  assert.equal(env.sheets.Registrations.rows.length - 1, 2);
+  const cls = addClass(env, { seats: 2 });
+  assert.equal(env.call(person({ email: 'a@example.com' })).status, 'registered');
+  assert.equal(env.call(person({ email: 'b@example.com' })).status, 'registered');
+  assert.equal(env.call(person({ email: 'c@example.com' })).status, 'waitlisted');
+  const statuses = env.sheets.Registrations.rows.slice(1).map((r) => r[8]);
+  assert.deepEqual(statuses, ['registered', 'registered', 'waitlisted']);
+  const waitMail = env.sent.find((m) => m.to === 'c@example.com');
+  assert.ok(waitMail.subject.startsWith('Waiting list'));
+  assert.ok(!waitMail.body.includes(cls.meet), 'no Meet link for the waiting list');
+  assert.ok(waitMail.body.includes('https://example.test/student-portal/cancel?token='));
+  assert.equal(env.call(person({ email: 'c@example.com' })).error, 'duplicate', 'cannot join the list twice');
 });
 
 test('closed, past and unknown classes cannot be booked', () => {
@@ -246,8 +270,8 @@ test('a paid class holds the seat while awaiting payment and sends no email yet'
   assert.equal(r.currency, 'USD');
   assert.equal(env.sheets.Registrations.rows[1][8], 'awaiting payment');
   assert.equal(env.sent.length, 0, 'no Meet link before payment');
-  // The held seat counts, so a second person sees the class as full.
-  assert.equal(env.call(person({ classId: 'paid-po', email: 'other@example.com' })).error, 'full');
+  // The held seat counts, so a second person goes on the waiting list.
+  assert.equal(env.call(person({ classId: 'paid-po', email: 'other@example.com' })).status, 'waitlisted');
   assert.equal(env.call({ secret: SECRET, action: 'list' }).classes[0].seatsLeft, 0);
 });
 
@@ -339,6 +363,116 @@ test('payment notices with unknown references or bad payment IDs are rejected', 
   assert.equal(markPaid(env, 'nosuchtoken').error, 'not_found');
   const r = env.call(person({ classId: 'paid-po' }));
   assert.equal(markPaid(env, r.token, { paymentId: 'not-a-payment' }).error, 'invalid');
+});
+
+// --- Stage 3: cancel link, waiting list, reminders ---
+
+const tokenOf = (env, email) => env.sheets.Registrations.rows.find((r) => r[5] === email)[10];
+const statusOf = (env, email) => env.sheets.Registrations.rows.find((r) => r[5] === email)[8];
+
+test('every confirmation email has a cancel link and a line about cancelling', () => {
+  const env = load();
+  addClass(env);
+  env.call(person());
+  const body = env.sent[0].body;
+  assert.ok(body.includes(`https://example.test/student-portal/cancel?token=${uuidFor(1)}`));
+  assert.ok(body.includes("Can't make it? Please cancel so someone on the waiting list can have your place"));
+});
+
+test('the cancel page lookup shows class details only, never personal data', () => {
+  const env = load();
+  addClass(env);
+  env.call(person());
+  const found = env.call({ secret: SECRET, action: 'lookup', token: uuidFor(1) });
+  assert.deepEqual(Object.keys(found).sort(), ['classTitle', 'ok', 'startUtc', 'status']);
+  assert.ok(!JSON.stringify(found).includes('asha'));
+  assert.equal(env.call({ secret: SECRET, action: 'lookup', token: 'not-a-token' }).error, 'invalid');
+});
+
+test('cancelling frees the seat and gives it to the first person on the waiting list', () => {
+  const env = load();
+  const cls = addClass(env, { seats: 1 });
+  env.call(person({ email: 'first@example.com' }));
+  env.call(person({ email: 'wait1@example.com' }));
+  env.call(person({ email: 'wait2@example.com' }));
+  const result = env.call({ secret: SECRET, action: 'cancel', token: tokenOf(env, 'first@example.com') });
+  assert.deepEqual(result, { ok: true, status: 'cancelled', promoted: true });
+  assert.equal(statusOf(env, 'first@example.com'), 'cancelled');
+  assert.equal(statusOf(env, 'wait1@example.com'), 'registered');
+  assert.equal(statusOf(env, 'wait2@example.com'), 'waitlisted');
+  const promotedMail = env.sent.filter((m) => m.to === 'wait1@example.com').pop();
+  assert.ok(promotedMail.body.includes('a place opened up'));
+  assert.ok(promotedMail.body.includes(cls.meet));
+  assert.equal(promotedMail.attachments[0].type, 'text/calendar');
+});
+
+test('cancelling twice is harmless, and leaving the waiting list promotes nobody', () => {
+  const env = load();
+  addClass(env, { seats: 1 });
+  env.call(person({ email: 'first@example.com' }));
+  env.call(person({ email: 'wait1@example.com' }));
+  env.call(person({ email: 'wait2@example.com' }));
+  const token = tokenOf(env, 'wait1@example.com');
+  assert.equal(env.call({ secret: SECRET, action: 'cancel', token }).promoted, false);
+  assert.equal(env.call({ secret: SECRET, action: 'cancel', token }).repeat, true);
+  assert.equal(statusOf(env, 'wait2@example.com'), 'waitlisted');
+  assert.equal(statusOf(env, 'first@example.com'), 'registered');
+});
+
+test('cannot cancel after the class has started, or with an unknown link', () => {
+  const env = load();
+  addClass(env);
+  env.call(person());
+  env.sheets.Classes.rows[1][3] = new Date(Date.now() - 60000);
+  assert.equal(env.call({ secret: SECRET, action: 'cancel', token: uuidFor(1) }).error, 'too_late');
+  assert.equal(env.call({ secret: SECRET, action: 'cancel', token: uuidFor(99) }).error, 'not_found');
+});
+
+test('setup creates exactly one 15-minute reminder timer, even when run again', () => {
+  const env = load();
+  env.context.setup();
+  assert.equal(env.triggers.length, 1);
+  assert.equal(env.triggers[0].handler, 'sendReminders');
+  assert.equal(env.triggers[0].minutes, 15);
+});
+
+test('24-hour and 1-hour reminders go once each, with the join and cancel links', () => {
+  const env = load();
+  const soon = addClass(env, { id: 'in-23h', start: new Date(Date.now() + 23 * 3600000) });
+  addClass(env, { id: 'in-50m', start: new Date(Date.now() + 50 * 60000) });
+  env.call(person({ classId: 'in-23h', email: 'early@example.com' }));
+  env.call(person({ classId: 'in-23h', email: 'late@example.com' }));
+  env.call(person({ classId: 'in-50m', email: 'hour@example.com' }));
+  env.call(person({ classId: 'in-23h', email: 'gone@example.com' }));
+  // early@ registered two days ago; late@ registered just now (inside the 24 hours).
+  env.sheets.Registrations.rows.find((r) => r[5] === 'early@example.com')[0] = new Date(Date.now() - 2 * DAY).toISOString();
+  env.sheets.Registrations.rows.find((r) => r[5] === 'gone@example.com')[0] = new Date(Date.now() - 2 * DAY).toISOString();
+  env.call({ secret: SECRET, action: 'cancel', token: tokenOf(env, 'gone@example.com') });
+  const before = env.sent.length;
+
+  env.context.sendReminders();
+  env.context.sendReminders(); // the timer runs again: nothing is sent twice
+  const reminders = env.sent.slice(before);
+  assert.deepEqual(reminders.map((m) => m.to).sort(), ['early@example.com', 'hour@example.com']);
+  const day = reminders.find((m) => m.to === 'early@example.com');
+  assert.ok(day.subject.startsWith('Reminder: '));
+  assert.ok(day.body.includes(soon.meet));
+  assert.ok(day.body.includes('/student-portal/cancel?token='));
+  const hour = reminders.find((m) => m.to === 'hour@example.com');
+  assert.ok(hour.subject.startsWith('Starting soon: '));
+  assert.ok(hour.body.includes('/student-portal/cancel?token='));
+  assert.equal(env.sheets.Registrations.rows.find((r) => r[5] === 'early@example.com')[16], 'sent');
+});
+
+test('when the daily email limit is nearly used up, the owner is told and nothing is over-sent', () => {
+  const env = load({ quota: 2 });
+  addClass(env, { id: 'in-50m', start: new Date(Date.now() + 50 * 60000), seats: 10 });
+  for (const n of [1, 2, 3, 4]) env.call(person({ classId: 'in-50m', email: `p${n}@example.com` }));
+  const before = env.sent.length;
+  env.context.sendReminders();
+  const sentNow = env.sent.slice(before);
+  assert.ok(sentNow.some((m) => m.to === 'owner@example.com' && m.subject.includes('daily email limit')));
+  assert.equal(sentNow.filter((m) => m.to !== 'owner@example.com').length, 1);
 });
 
 test('stops a name from becoming a spreadsheet formula, and falls back on unknown time zones', () => {

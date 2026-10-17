@@ -54,10 +54,13 @@ async function callScript<T>(body: Record<string, unknown>, revalidate?: number)
   }
 }
 
-/** Upcoming open classes, refreshed at most once a minute. null means the list could not be loaded. */
+/** How often seat counts are refreshed from the sheet, in seconds. */
+export const CLASS_DATA_SECONDS = 10;
+
+/** Upcoming open classes, refreshed about every 10 seconds. null means the list could not be loaded. */
 export async function getClasses(): Promise<PublicClass[] | null> {
   if (!isRegistrationOpen()) return [];
-  const reply = await callScript<{ ok?: boolean; classes?: PublicClass[] }>({ action: 'list' }, 60);
+  const reply = await callScript<{ ok?: boolean; classes?: PublicClass[] }>({ action: 'list' }, CLASS_DATA_SECONDS);
   if (!reply?.ok || !Array.isArray(reply.classes)) return null;
   return reply.classes;
 }
@@ -69,7 +72,7 @@ export async function getClass(id: string): Promise<PublicClass | null | undefin
 }
 
 export type RegisterReply =
-  | { ok: true; status: 'registered'; emailed?: boolean }
+  | { ok: true; status: 'registered' | 'waitlisted'; emailed?: boolean }
   | { ok: true; status: 'awaiting_payment'; token: string; amountCents: number; currency: string; title: string }
   | { ok: false; error: string };
 
@@ -90,6 +93,31 @@ export async function markPaidWithScript(p: {
   currency: string;
 }): Promise<MarkPaidReply> {
   const reply = await callScript<MarkPaidReply>({ action: 'markPaid', ...p });
+  return reply ?? { ok: false, error: 'unavailable' };
+}
+
+// ---------- Cancelling (link in every email) ----------
+
+export const TOKEN_PATTERN = /^[0-9a-f-]{32,36}$/i;
+
+/** Class name, start and status for the cancel page. The script never returns personal data here. */
+export async function lookupRegistration(
+  token: string,
+): Promise<{ ok: true; classTitle: string; startUtc: string; status: string } | { ok: false; error: string }> {
+  if (!TOKEN_PATTERN.test(token)) return { ok: false, error: 'invalid' };
+  const reply = await callScript<{ ok: true; classTitle: string; startUtc: string; status: string } | { ok: false; error: string }>(
+    { action: 'lookup', token },
+  );
+  return reply ?? { ok: false, error: 'unavailable' };
+}
+
+export async function cancelWithScript(
+  token: string,
+): Promise<{ ok: true; status: 'cancelled'; promoted?: boolean; repeat?: boolean } | { ok: false; error: string }> {
+  if (!TOKEN_PATTERN.test(token)) return { ok: false, error: 'invalid' };
+  const reply = await callScript<{ ok: true; status: 'cancelled'; promoted?: boolean; repeat?: boolean } | { ok: false; error: string }>(
+    { action: 'cancel', token },
+  );
   return reply ?? { ok: false, error: 'unavailable' };
 }
 
