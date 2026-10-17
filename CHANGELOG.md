@@ -4,6 +4,25 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Waiting-list email reliability and faculty per class
+
+- Every class email now goes through one path that records the outcome in the "Confirmation
+  email" column (`yes`, `yes (place opened up)`, `waiting list email sent`, or
+  `FAILED (..., attempt N): reason`), logs a clear reason in Apps Script's Executions, emails the
+  owner on the first failure, and is retried by the 15-minute timer (up to 5 times, until the class
+  starts). It is never sent twice: a send cut off half-way is marked "sending" and not retried.
+  Before, a failed "place opened up" email was swallowed with a short log line and the column
+  looked the same as a sent waiting-list email.
+- If Google's daily email limit is used up, the script records that instead of trying, and the
+  timer sends the email after the reset.
+- Classes tab: new columns "Faculty role", "Faculty name (optional)", "Faculty LinkedIn
+  (optional)", added by setup at the end without moving data (setup stops with a clear message if
+  a different heading is in the way). The class page shows "Taught by a practising {role}: {name}",
+  with the name linked to LinkedIn (new tab, `rel="noopener noreferrer"`), only the role when
+  there is no name, and nothing when there is no role. Only `https://www.linkedin.com/` addresses
+  are used. The named person is added to the Event structured data as the performer.
+- 6 new tests (37 in total).
+
 ### Classes not showing: diagnosis and fixes
 
 - Production builds were removing every log line, including errors, so Vercel's logs could never

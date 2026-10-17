@@ -58,6 +58,9 @@ One row per class. Never put a sample or test class in the LIVE sheet.
 | Meet link (private) | The Google Meet link, starting with `https://`. Required: a class without one is not shown. Never shown on the website; sent only by email. |
 | Status | `open` to show it on the site, `closed` to hide it |
 | Description (optional) | A short description, or leave empty |
+| Faculty role | For example `Product Owner`, `Product Manager` or `HR Business Partner`. The class page says "Taught by a practising Product Owner". Leave empty for no "Taught by" line. |
+| Faculty name (optional) | For example `Asha Rao`. Shown after the role: "Taught by a practising Product Owner: Asha Rao". |
+| Faculty LinkedIn (optional) | The full profile address, starting with `https://www.linkedin.com/`. The name becomes a link to it (new tab). Any other address is ignored. Used only when a name is given. |
 
 A class appears on the website only when every column except Description is filled, the status is
 `open` and the start time is in the future. Changes, including the "seats left" number, show on the
@@ -137,6 +140,26 @@ On the live site, `/student-portal` must still say "Master classes are coming" u
    says "Refused: the password from the website does not match SHARED_SECRET". A list call says how
    many classes were shown and which rows were not. A run marked **Completed** only means the script
    answered, not that it answered with classes.
+
+## If someone did not receive an email
+
+1. **Registrations tab, column "Confirmation email"** for their row:
+   - `yes` or `yes (place opened up)`: Google accepted the email. Ask them to check Spam and
+     Promotions, and that the address in the row is spelled right.
+   - `waiting list email sent`: they are still on the waiting list (no place has opened up yet).
+   - `FAILED (..., attempt N): reason`: Google refused it; the reason is in the cell. The script
+     tries again every 15 minutes (up to 5 times, until the class starts), and you get an email
+     "Master class email not sent" after the first failure.
+   - `sending (...)`: the script was stopped while sending (rare). It is not re-sent automatically,
+     so nobody gets two copies; send the join link by hand.
+2. **Apps Script → Executions** (left menu). Find the `doPost` run at the time of the cancel and
+   click it. A good run shows "Row 5 cancelled; row 7 moved up from the waiting list." and
+   "Row 7: place opened up email sent." A failed send shows "Row 7: place opened up email NOT sent
+   (attempt 1). Reason: ...". Retries appear in `sendReminders` runs.
+3. Common reasons: "daily email limit ... used up" (wait for the reset; it is then sent
+   automatically), "Invalid email" (fix the address in the row, then send the join link by hand), or
+   an authorisation message (open the script, run **setup** once and approve the permissions, then
+   deploy a new version).
 
 ## 5. Razorpay for paid classes (not needed while classes are free)
 

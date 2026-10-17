@@ -32,6 +32,9 @@ var CLASS_HEADERS = [
   'Meet link (private)',  // H  never shown on the website; sent only by email
   'Status',               // I  open | closed
   'Description (optional)', // J
+  'Faculty role',         // K  e.g. Product Owner; empty = no "Taught by" line
+  'Faculty name (optional)', // L
+  'Faculty LinkedIn (optional)', // M  only https://www.linkedin.com/ addresses are used
 ];
 
 var REGISTRATION_HEADERS = [
@@ -86,11 +89,34 @@ function setup() {
   if (!exists) ScriptApp.newTrigger('sendReminders').timeBased().everyMinutes(REMINDER_MINUTES).create();
 }
 
+/**
+ * Creates the tab or adds missing header cells at the end. Never moves or deletes data:
+ * if a header cell already holds something different, it stops with a clear message
+ * instead of overwriting it.
+ */
 function ensureSheet_(book, name, headers) {
   var sheet = book.getSheetByName(name) || book.insertSheet(name);
+  if (sheet.getMaxColumns() < headers.length) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), headers.length - sheet.getMaxColumns());
+  }
+  var current = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
+  headers.forEach(function (header, i) {
+    var found = String(current[i]).trim();
+    if (found !== '' && found !== header) {
+      throw new Error('Setup stopped, nothing was changed in this column: in the "' + name + '" tab, column ' +
+        columnLetter_(i + 1) + ' is headed "' + found + '" but should be "' + header + '". ' +
+        'Move that column to the right of the last expected column, then run setup again.');
+    }
+  });
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
   sheet.setFrozenRows(1);
   return sheet;
+}
+
+function columnLetter_(n) {
+  var s = '';
+  for (; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s;
+  return s;
 }
 
 function doGet() {
@@ -148,9 +174,22 @@ function readClasses_() {
         meetLink: String(row[7]).trim(),
         status: String(row[8]).trim().toLowerCase(),
         description: String(row[9] || '').trim(),
+        facultyRole: oneLine_(row[10], 60),
+        facultyName: oneLine_(row[11], 80),
+        facultyLinkedIn: linkedInUrl_(row[12]),
       };
     })
     .filter(function (c) { return c.id !== ''; });
+}
+
+function oneLine_(value, max) {
+  return String(value == null ? '' : value).replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+/** Only https://www.linkedin.com/ addresses are used; anything else is ignored (''). */
+function linkedInUrl_(value) {
+  var url = String(value == null ? '' : value).trim();
+  return /^https:\/\/www\.linkedin\.com\/[A-Za-z0-9\-._~%\/?=&+]*$/.test(url) && url.length <= 200 ? url : '';
 }
 
 /** The topic exactly as listed in TOPICS, ignoring case and extra spaces; '' if it is not one. */
@@ -191,6 +230,7 @@ function readRegistrations_() {
         paymentId: String(row[9]).trim(),
         token: String(row[10]).trim(),
         timeZone: String(row[13]).trim(),
+        confirmation: String(row[15]).trim(),
         reminder24: String(row[16]).trim(),
         reminder1: String(row[17]).trim(),
       };
@@ -274,6 +314,9 @@ function classList_() {
         seatsLeft: Math.max(0, c.seats - seatsTaken_(registrations, c.id)),
         priceUsd: c.price,
         description: c.description,
+        facultyRole: c.facultyRole,
+        facultyName: c.facultyRole ? c.facultyName : '',
+        facultyLinkedIn: c.facultyRole && c.facultyName ? c.facultyLinkedIn : '',
       };
     });
   return { classes: classes, problems: problems };
@@ -369,15 +412,9 @@ function register_(request) {
 
   // Email after the row is saved and the lock released, so a slow email never blocks others.
   var person = { name: name, email: email, child: child, timeZone: timeZone, token: token };
-  var emailed = false;
-  try {
-    if (full) sendWaitlisted_(cls, person);
-    else sendConfirmation_(cls, person);
-    emailed = true;
-  } catch (error) {
-    console.error('Email failed: ' + error);
-  }
-  setCells_(rowNumber, { 'Confirmation email': emailed ? 'yes' : 'FAILED' });
+  var emailed = full
+    ? deliver_(rowNumber, 'waiting list', 'waiting list email sent', function () { sendWaitlisted_(cls, person); })
+    : deliver_(rowNumber, 'confirmation', 'yes', function () { sendConfirmation_(cls, person); });
 
   return { ok: true, status: full ? 'waitlisted' : 'registered', emailed: emailed };
 }
@@ -448,14 +485,14 @@ function cancel_(request) {
   if (ownerNote) alertOwner_('Master class cancellation: refund decision needed', ownerNote + '\n\nRegistrant: ' + row.name + ' <' + row.email + '>\nClass: ' + row.classId);
   if (promoted) {
     var who = { name: promoted.name, email: promoted.email, child: promoted.child, timeZone: validTimeZone_(promoted.timeZone), token: promoted.token };
-    try {
-      if (cls.price > 0) sendPlaceToPay_(cls, who);
-      else sendConfirmation_(cls, who, true);
-      setCells_(promoted.rowNumber, { 'Confirmation email': 'yes' });
-    } catch (error) {
-      console.error('Waiting-list email failed: ' + error);
-      setCells_(promoted.rowNumber, { 'Confirmation email': 'FAILED' });
+    console.log('Row ' + row.rowNumber + ' cancelled; row ' + promoted.rowNumber + ' moved up from the waiting list.');
+    if (cls.price > 0) {
+      deliver_(promoted.rowNumber, 'place to pay', 'place offered, awaiting payment', function () { sendPlaceToPay_(cls, who); });
+    } else {
+      deliver_(promoted.rowNumber, PLACE_OPENED, 'yes (' + PLACE_OPENED + ')', function () { sendConfirmation_(cls, who, true); });
     }
+  } else if (heldSeat) {
+    console.log('Row ' + row.rowNumber + ' cancelled; nobody is on the waiting list, so the seat is free again.');
   }
   return { ok: true, status: 'cancelled', promoted: Boolean(promoted) };
 }
@@ -475,6 +512,7 @@ function sendReminders() {
     readClasses_().forEach(function (c) {
       if (c.start instanceof Date && c.start.getTime() > now && c.meetLink) classes[c.id] = c;
     });
+    retryFailedEmails_(classes);
     readRegistrations_().forEach(function (r) {
       var cls = classes[r.classId];
       if (!cls || HOLDS_SEAT.indexOf(r.status) < 0) return;
@@ -563,15 +601,67 @@ function markPaid_(request) {
   }
   var emailed = false;
   if (sendEmail) {
-    try {
-      sendConfirmation_(cls, { name: row.name, email: row.email, child: row.child, timeZone: validTimeZone_(row.timeZone), token: row.token, paymentId: paymentId });
-      emailed = true;
-    } catch (error) {
-      console.error('Confirmation email failed: ' + error);
-    }
-    setCells_(row.rowNumber, { 'Confirmation email': emailed ? 'yes' : 'FAILED' });
+    var payer = { name: row.name, email: row.email, child: row.child, timeZone: validTimeZone_(row.timeZone), token: row.token, paymentId: paymentId };
+    emailed = deliver_(row.rowNumber, 'confirmation', 'yes', function () { sendConfirmation_(cls, payer); });
   }
   return { ok: true, status: 'paid', emailed: emailed };
+}
+
+var PLACE_OPENED = 'place opened up';
+var MAX_EMAIL_ATTEMPTS = 5;
+
+/**
+ * Sends one email to a registrant and records the outcome in the row's "Confirmation email"
+ * cell, so each email is sent exactly once:
+ *   - before sending, the cell says "sending (...)": if Google stops the script half-way, the
+ *     row is never sent a second copy automatically;
+ *   - after sending, the cell holds okValue;
+ *   - if it cannot be sent, the cell says "FAILED (what, attempt N): reason", the reason is
+ *     logged (Apps Script > Executions), and the 15-minute timer tries again (up to
+ *     MAX_EMAIL_ATTEMPTS times, until the class starts). The owner is emailed on the first failure.
+ * Returns true when the email was sent.
+ */
+function deliver_(rowNumber, what, okValue, sendFn, attempt) {
+  attempt = attempt || 1;
+  var reason = '';
+  var left = MailApp.getRemainingDailyQuota();
+  if (left < 1) {
+    reason = "Google's daily email limit for this account is used up (it resets within 24 hours)";
+  } else {
+    setCells_(rowNumber, { 'Confirmation email': 'sending (' + what + ')' });
+    try {
+      sendFn();
+    } catch (error) {
+      reason = String(error && error.message ? error.message : error);
+    }
+  }
+  if (!reason) {
+    setCells_(rowNumber, { 'Confirmation email': okValue });
+    console.log('Row ' + rowNumber + ': ' + what + ' email sent.');
+    return true;
+  }
+  setCells_(rowNumber, { 'Confirmation email': 'FAILED (' + what + ', attempt ' + attempt + '): ' + reason.slice(0, 200) });
+  console.error('Row ' + rowNumber + ': ' + what + ' email NOT sent (attempt ' + attempt + '). Reason: ' + reason);
+  if (attempt === 1 && left >= 1) {
+    alertOwner_('Master class email not sent',
+      'The ' + what + ' email for row ' + rowNumber + ' of the Registrations tab could not be sent.\n\nReason: ' + reason +
+      '\n\nThe script will try again every 15 minutes until the class starts.');
+  }
+  return false;
+}
+
+/** Retries confirmation and "place opened up" emails that failed (run by the 15-minute timer). */
+function retryFailedEmails_(classes) {
+  readRegistrations_().forEach(function (r) {
+    var m = r.confirmation.match(/^FAILED \((confirmation|place opened up), attempt (\d+)\)/);
+    var cls = classes[r.classId];
+    if (!m || !cls || HOLDS_SEAT.indexOf(r.status) < 0 || Number(m[2]) >= MAX_EMAIL_ATTEMPTS) return;
+    var fromWaitlist = m[1] === PLACE_OPENED;
+    var person = { name: r.name, email: r.email, child: r.child, timeZone: validTimeZone_(r.timeZone), token: r.token };
+    if (r.status === 'paid') person.paymentId = r.paymentId;
+    deliver_(r.rowNumber, m[1], fromWaitlist ? 'yes (' + PLACE_OPENED + ')' : 'yes',
+      function () { sendConfirmation_(cls, person, fromWaitlist); }, Number(m[2]) + 1);
+  });
 }
 
 function alertOwner_(subject, body) {

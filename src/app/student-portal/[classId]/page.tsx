@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import LocalTime from '@/components/classes/LocalTime';
 import RegistrationForm from '@/components/classes/RegistrationForm';
 import StructuredData from '@/components/StructuredData';
-import { getClass, getClasses, isRegistrationOpen } from '@/lib/classes';
+import { facultyOf, getClass, getClasses, isRegistrationOpen } from '@/lib/classes';
 import { pageMetadata } from '@/lib/metadata';
 import { SITE_URL, organizationData } from '@/lib/site';
 
@@ -45,6 +45,7 @@ export default async function ClassPage({ params }: Params) {
   if (!cls) notFound();
 
   const url = `${SITE_URL}/student-portal/${cls.id}`;
+  const faculty = facultyOf(cls);
   const end = new Date(new Date(cls.startUtc).getTime() + cls.durationMinutes * 60000).toISOString();
   const structuredData = {
     '@context': 'https://schema.org',
@@ -59,6 +60,16 @@ export default async function ClassPage({ params }: Params) {
     location: { '@type': 'VirtualLocation', url },
     image: `${SITE_URL}/og-image.jpg`,
     organizer: organizationData(),
+    ...(faculty?.name
+      ? {
+          performer: {
+            '@type': 'Person',
+            name: faculty.name,
+            jobTitle: faculty.role,
+            ...(faculty.linkedIn ? { url: faculty.linkedIn, sameAs: [faculty.linkedIn] } : {}),
+          },
+        }
+      : {}),
     offers: {
       '@type': 'Offer',
       url,
@@ -110,7 +121,29 @@ export default async function ClassPage({ params }: Params) {
               </div>
             </dl>
             {cls.description && <p className="mb-6 max-w-[640px] whitespace-pre-line text-mz-body">{cls.description}</p>}
-            <p className="text-mz-body">Taught by a practising product owner.</p>
+            {faculty && (
+              <p className="text-mz-body">
+                Taught by a practising {faculty.role}
+                {faculty.name && (
+                  <>
+                    {': '}
+                    {faculty.linkedIn ? (
+                      <a
+                        href={faculty.linkedIn}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-mz-ink underline hover:text-mz-accent"
+                      >
+                        {faculty.name}
+                        <span className="sr-only"> (LinkedIn profile, opens in a new tab)</span>
+                      </a>
+                    ) : (
+                      <span className="font-semibold text-mz-ink">{faculty.name}</span>
+                    )}
+                  </>
+                )}
+              </p>
+            )}
           </div>
 
           <div className="w-full min-w-0 flex-[1_1_360px] rounded-[20px] border border-mz-border bg-white p-6 sm:p-7">

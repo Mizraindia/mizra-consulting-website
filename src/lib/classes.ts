@@ -16,6 +16,30 @@ export interface PublicClass {
   seatsLeft: number;
   priceUsd: number;
   description: string;
+  /** For example "Product Owner". Empty: no "Taught by" line. */
+  facultyRole?: string;
+  facultyName?: string;
+  facultyLinkedIn?: string;
+}
+
+/** The faculty line for a class page, or null when no role is set. */
+export function facultyOf(cls: PublicClass): { role: string; name: string; linkedIn: string } | null {
+  const role = (cls.facultyRole ?? '').trim();
+  if (!role) return null;
+  const name = (cls.facultyName ?? '').trim();
+  return { role, name, linkedIn: name ? safeLinkedIn(cls.facultyLinkedIn) : '' };
+}
+
+/** Only https://www.linkedin.com/ addresses; anything else is ignored. Checked here as well as in the script. */
+export function safeLinkedIn(value: unknown): string {
+  if (typeof value !== 'string' || value.length > 200) return '';
+  try {
+    const url = new URL(value.trim());
+    const ok = url.protocol === 'https:' && url.hostname === 'www.linkedin.com' && !url.username && !url.password && !url.port;
+    return ok ? url.href : '';
+  } catch {
+    return '';
+  }
 }
 
 /** The owner's switch. Registration stays off until the lawyer approves the consent wording. */

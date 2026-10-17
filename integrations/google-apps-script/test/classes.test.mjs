@@ -15,10 +15,13 @@ const DAY = 24 * 60 * 60 * 1000;
 
 function makeSheet(name) {
   const rows = [];
+  let maxColumns = 26;
   const cell = (r, c) => (rows[r - 1] || [])[c - 1];
   return {
     name,
     rows,
+    getMaxColumns: () => maxColumns,
+    insertColumnsAfter(after, n) { maxColumns += n; },
     getLastRow: () => rows.length,
     appendRow: (values) => rows.push([...values]),
     setFrozenRows() {},
@@ -33,7 +36,8 @@ function makeSheet(name) {
             Array.from({ length: numCols }, (_, j) => cell(row + i, col + j) ?? ''),
           ),
         setValues(values) {
-          values.forEach((v, i) => { rows[row - 1 + i] = [...v]; });
+          if (col + values[0].length - 1 > maxColumns) throw new Error('outside the sheet');
+          values.forEach((v, i) => { const r = (rows[row - 1 + i] = rows[row - 1 + i] || []); v.forEach((x, j) => { r[col - 1 + j] = x; }); });
           return this;
         },
         setValue(value) {
@@ -69,6 +73,7 @@ function load({ lockFree = true, quota = 1000, secretProperty = SECRET } = {}) {
   const logs = [];
   const sent = [];
   const triggers = [];
+  const mail = { failWith: null };
   let uuid = 0;
   const book = {
     setSpreadsheetTimeZone() {},
@@ -95,7 +100,10 @@ function load({ lockFree = true, quota = 1000, secretProperty = SECRET } = {}) {
         getProperty: (k) => ({ SHARED_SECRET: secretProperty, OWNER_EMAIL: 'owner@example.com', SITE_URL: 'https://example.test/' })[k] ?? null,
       }),
     },
-    MailApp: { sendEmail: (m) => sent.push(m), getRemainingDailyQuota: () => quota },
+    MailApp: {
+      sendEmail: (m) => { if (mail.failWith) throw new Error(mail.failWith); sent.push(m); },
+      getRemainingDailyQuota: () => quota,
+    },
     ScriptApp: {
       getProjectTriggers: () => triggers,
       newTrigger: (handler) => {
@@ -121,7 +129,7 @@ function load({ lockFree = true, quota = 1000, secretProperty = SECRET } = {}) {
   vm.runInContext(SOURCE, context);
   context.setup();
   const call = (body) => context.doPost({ postData: { contents: JSON.stringify(body) } }).body;
-  return { sheets, sent, call, context, triggers, logs };
+  return { sheets, sent, call, context, triggers, logs, mail };
 }
 
 function addClass(env, overrides = {}) {
@@ -130,7 +138,8 @@ function addClass(env, overrides = {}) {
     start: new Date(Date.now() + 7 * DAY), duration: 90, seats: 2, price: 0,
     meet: 'https://meet.google.com/abc-defg-hij', status: 'open', description: '', ...overrides,
   };
-  env.sheets.Classes.appendRow([c.id, c.title, c.topic, c.start, c.duration, c.seats, c.price, c.meet, c.status, c.description]);
+  env.sheets.Classes.appendRow([c.id, c.title, c.topic, c.start, c.duration, c.seats, c.price, c.meet, c.status, c.description,
+    c.facultyRole ?? '', c.facultyName ?? '', c.facultyLinkedIn ?? '']);
   return c;
 }
 
@@ -165,7 +174,7 @@ test('public list shows only open, upcoming, complete classes and never the Meet
   assert.ok(!json.includes('meet.google.com'), 'Meet link must never appear');
   assert.ok(!json.includes('asha'), 'personal data must never appear');
   assert.deepEqual(Object.keys(list.classes[0]).sort(),
-    ['description', 'durationMinutes', 'id', 'priceUsd', 'seats', 'seatsLeft', 'startUtc', 'title', 'topic']);
+    ['description', 'durationMinutes', 'facultyLinkedIn', 'facultyName', 'facultyRole', 'id', 'priceUsd', 'seats', 'seatsLeft', 'startUtc', 'title', 'topic']);
   assert.equal(list.classes[0].seatsLeft, 1);
 });
 
@@ -182,6 +191,44 @@ test('the owner\'s sample row is listed, also when the start was typed as text o
   assert.equal(list.classes[1].topic, 'Product management');
   assert.equal(list.classes[0].priceUsd, 0);
   assert.deepEqual(list.problems, []);
+});
+
+test('faculty: role, optional name and LinkedIn; only https://www.linkedin.com/ links are passed on', () => {
+  const env = load();
+  const li = 'https://www.linkedin.com/in/asha-rao-123/';
+  addClass(env, { id: 'full', facultyRole: 'Product Owner', facultyName: 'Asha Rao', facultyLinkedIn: li });
+  addClass(env, { id: 'no-name', facultyRole: 'HR Business Partner', facultyLinkedIn: li });
+  addClass(env, { id: 'no-role', facultyName: 'Asha Rao', facultyLinkedIn: li });
+  addClass(env, { id: 'bad-link-1', facultyRole: 'Product Manager', facultyName: 'A B', facultyLinkedIn: 'http://www.linkedin.com/in/x' });
+  addClass(env, { id: 'bad-link-2', facultyRole: 'Product Manager', facultyName: 'A B', facultyLinkedIn: 'https://www.linkedin.com.evil.example/in/x' });
+  addClass(env, { id: 'bad-link-3', facultyRole: 'Product Manager', facultyName: 'A B', facultyLinkedIn: 'https://linkedin.com/in/x' });
+  addClass(env, { id: 'bad-link-4', facultyRole: 'Product Manager', facultyName: 'A B', facultyLinkedIn: 'https://www.linkedin.com/in/x"><script>' });
+  const byId = Object.fromEntries(env.call({ secret: SECRET, action: 'list' }).classes.map((c) => [c.id, c]));
+  assert.deepEqual([byId.full.facultyRole, byId.full.facultyName, byId.full.facultyLinkedIn], ['Product Owner', 'Asha Rao', li]);
+  assert.deepEqual([byId['no-name'].facultyName, byId['no-name'].facultyLinkedIn], ['', '']);
+  assert.deepEqual([byId['no-role'].facultyRole, byId['no-role'].facultyName, byId['no-role'].facultyLinkedIn], ['', '', '']);
+  for (const id of ['bad-link-1', 'bad-link-2', 'bad-link-3', 'bad-link-4']) {
+    assert.equal(byId[id].facultyLinkedIn, '', id);
+    assert.equal(byId[id].facultyName, 'A B', id);
+  }
+});
+
+test('setup adds the faculty columns to an existing Classes tab without moving or deleting data', () => {
+  const env = load();
+  const tab = env.sheets.Classes;
+  // An older Classes tab: 10 headers, one class, and only 10 columns in the sheet.
+  tab.rows[0] = tab.rows[0].slice(0, 10);
+  const old = ['pm-old', 'Old class', 'HR', new Date(Date.now() + DAY), 60, 5, 0, 'https://meet.google.com/x', 'open', 'desc'];
+  tab.appendRow(old);
+  env.context.setup();
+  assert.deepEqual(tab.rows[0].slice(10), ['Faculty role', 'Faculty name (optional)', 'Faculty LinkedIn (optional)']);
+  assert.deepEqual(tab.rows[1], old);
+  assert.equal(env.call({ secret: SECRET, action: 'list' }).classes[0].id, 'pm-old');
+
+  // A different heading where a new column should go: setup stops and changes nothing.
+  tab.rows[0][11] = 'My notes';
+  assert.throws(() => env.context.setup(), /column L is headed "My notes"/);
+  assert.equal(tab.rows[0][11], 'My notes');
 });
 
 test('rows that cannot be shown are reported with row number and reason, never the Meet link', () => {
@@ -469,6 +516,75 @@ test('cancelling frees the seat and gives it to the first person on the waiting 
   assert.ok(promotedMail.body.includes('a place opened up'));
   assert.ok(promotedMail.body.includes(cls.meet));
   assert.equal(promotedMail.attachments[0].type, 'text/calendar');
+});
+
+const confirmationOf = (env, email) => env.sheets.Registrations.rows.find((r) => r[5] === email)[15];
+
+test('the person moved up from the waiting list gets the "place opened up" email exactly once', () => {
+  const env = load();
+  addClass(env, { seats: 1 });
+  env.call(person({ email: 'first@example.com' }));
+  env.call(person({ email: 'wait1@example.com', name: 'Ravi Kumar', timeZone: 'America/New_York' }));
+  assert.equal(confirmationOf(env, 'wait1@example.com'), 'waiting list email sent');
+  const before = env.sent.length;
+
+  const token = tokenOf(env, 'first@example.com');
+  env.call({ secret: SECRET, action: 'cancel', token });
+  env.call({ secret: SECRET, action: 'cancel', token }); // pressed twice
+  env.context.sendReminders(); // the timer runs: nothing is re-sent
+  const toWait1 = env.sent.slice(before).filter((m) => m.to === 'wait1@example.com');
+  assert.equal(toWait1.length, 1);
+  assert.equal(toWait1[0].subject, "You're registered: Product management basics");
+  assert.ok(toWait1[0].body.startsWith('Hi Ravi,\n\nGood news: a place opened up, and it is yours.'));
+  assert.equal(confirmationOf(env, 'wait1@example.com'), 'yes (place opened up)');
+  assert.ok(env.logs.some((l) => l.includes('moved up from the waiting list')));
+  assert.ok(env.logs.some((l) => /Row \d+: place opened up email sent/.test(l)));
+});
+
+test('if the "place opened up" email fails, the reason is logged and recorded, the owner is told, and the timer sends it once', () => {
+  const env = load();
+  addClass(env, { seats: 1 });
+  env.call(person({ email: 'first@example.com' }));
+  env.call(person({ email: 'wait1@example.com' }));
+  env.mail.failWith = 'Invalid email: wait1@example.com';
+  env.call({ secret: SECRET, action: 'cancel', token: tokenOf(env, 'first@example.com') });
+  assert.equal(statusOf(env, 'wait1@example.com'), 'registered');
+  assert.equal(confirmationOf(env, 'wait1@example.com'), 'FAILED (place opened up, attempt 1): Invalid email: wait1@example.com');
+  assert.ok(env.logs.some((l) => l.includes('place opened up email NOT sent (attempt 1). Reason: Invalid email')));
+
+  env.mail.failWith = null;
+  // The owner alert could not go out either while mail was failing; now the timer retries.
+  env.context.sendReminders();
+  env.context.sendReminders();
+  const toWait1 = env.sent.filter((m) => m.to === 'wait1@example.com' && m.body.includes('a place opened up'));
+  assert.equal(toWait1.length, 1);
+  assert.equal(confirmationOf(env, 'wait1@example.com'), 'yes (place opened up)');
+});
+
+test('with the daily email limit used up, nothing is attempted, the reason is recorded, and the timer sends it later', () => {
+  let quota = 5;
+  const env = load();
+  env.context.MailApp.getRemainingDailyQuota = () => quota;
+  addClass(env, { seats: 1 });
+  env.call(person({ email: 'first@example.com' }));
+  env.call(person({ email: 'wait1@example.com' }));
+  quota = 0;
+  env.call({ secret: SECRET, action: 'cancel', token: tokenOf(env, 'first@example.com') });
+  assert.match(confirmationOf(env, 'wait1@example.com'), /^FAILED \(place opened up, attempt 1\): Google's daily email limit/);
+  quota = 5;
+  env.context.sendReminders();
+  assert.equal(confirmationOf(env, 'wait1@example.com'), 'yes (place opened up)');
+  assert.equal(env.sent.filter((m) => m.to === 'wait1@example.com' && m.body.includes('a place opened up')).length, 1);
+});
+
+test('an email stuck as "sending" (script stopped half-way) is never re-sent automatically', () => {
+  const env = load();
+  addClass(env);
+  env.call(person());
+  env.sheets.Registrations.rows[1][15] = 'sending (confirmation)';
+  const before = env.sent.length;
+  env.context.sendReminders();
+  assert.equal(env.sent.length, before);
 });
 
 test('cancelling twice is harmless, and leaving the waiting list promotes nobody', () => {
