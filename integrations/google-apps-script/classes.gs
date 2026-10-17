@@ -100,10 +100,23 @@ function doGet() {
 function doPost(e) {
   try {
     var request = JSON.parse(e.postData.contents);
-    var secret = PropertiesService.getScriptProperties().getProperty('SHARED_SECRET');
-    if (!secret || !request || request.secret !== secret) return reply_({ ok: false, error: 'unauthorised' });
+    // Trimmed on both sides: a stray space or line break pasted with the password must not lock the site out.
+    var secret = String(PropertiesService.getScriptProperties().getProperty('SHARED_SECRET') || '').trim();
+    if (!secret) {
+      console.error('Refused: the SHARED_SECRET script property is not set.');
+      return reply_({ ok: false, error: 'unauthorised' });
+    }
+    if (!request || typeof request.secret !== 'string' || request.secret.trim() !== secret) {
+      console.error('Refused: the password from the website does not match SHARED_SECRET.');
+      return reply_({ ok: false, error: 'unauthorised' });
+    }
 
-    if (request.action === 'list') return reply_({ ok: true, classes: publicClasses_() });
+    if (request.action === 'list') {
+      var list = classList_();
+      console.log('list: ' + list.classes.length + ' class(es) shown' +
+        (list.problems.length ? '; not shown: ' + list.problems.map(problemText_).join('; ') : ''));
+      return reply_({ ok: true, classes: list.classes, problems: list.problems });
+    }
     if (request.action === 'register') return reply_(register_(request));
     if (request.action === 'markPaid') return reply_(markPaid_(request));
     if (request.action === 'lookup') return reply_(lookup_(request));
@@ -121,21 +134,44 @@ function readClasses_() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CLASSES_SHEET);
   if (!sheet || sheet.getLastRow() < 2) return [];
   return sheet.getRange(2, 1, sheet.getLastRow() - 1, CLASS_HEADERS.length).getValues()
-    .map(function (row) {
+    .map(function (row, i) {
       return {
+        rowNumber: i + 2,
         id: String(row[0]).trim(),
         title: String(row[1]).trim(),
-        topic: String(row[2]).trim(),
-        start: row[3],
+        topic: canonicalTopic_(row[2]),
+        start: startDate_(row[3]),
         duration: Number(row[4]),
         seats: Number(row[5]),
-        price: Number(row[6]) || 0,
+        // An empty or non-number price (for example "$10") is a problem, never silently free.
+        price: String(row[6]).trim() === '' ? NaN : Number(row[6]),
         meetLink: String(row[7]).trim(),
         status: String(row[8]).trim().toLowerCase(),
         description: String(row[9] || '').trim(),
       };
     })
     .filter(function (c) { return c.id !== ''; });
+}
+
+/** The topic exactly as listed in TOPICS, ignoring case and extra spaces; '' if it is not one. */
+function canonicalTopic_(value) {
+  var wanted = String(value).replace(/\s+/g, ' ').trim().toLowerCase();
+  for (var i = 0; i < TOPICS.length; i++) if (TOPICS[i].toLowerCase() === wanted) return TOPICS[i];
+  return '';
+}
+
+/**
+ * The class start as a Date. Sheets normally gives a Date already. If the cell holds text
+ * instead (formatted as plain text, or typed with a leading apostrophe), "2026-11-06 19:00"
+ * is read as India time (UTC+5:30, no daylight saving). Anything else gives null.
+ */
+function startDate_(value) {
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+  var m = String(value).trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  var utc = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) - 330 * 60000;
+  var date = new Date(utc);
+  return isNaN(date.getTime()) ? null : date;
 }
 
 function readRegistrations_() {
@@ -174,13 +210,32 @@ function setCells_(rowNumber, values) {
   });
 }
 
+/**
+ * Why a class row is not shown on the website, or '' when it is shown. "closed" and "past"
+ * are normal; every other reason means the row needs fixing.
+ */
+function classProblem_(c) {
+  if (c.status !== 'open') return 'closed';
+  if (!(c.start instanceof Date)) return 'Start is not a date and time (type it like 2026-11-06 19:00)';
+  if (c.start.getTime() <= Date.now()) return 'past';
+  if (!/^[a-z0-9-]{3,60}$/.test(c.id)) return 'Class ID must be 3 to 60 lowercase letters, numbers or hyphens';
+  if (c.title === '') return 'Title is empty';
+  if (c.topic === '') return 'Topic must be one of: ' + TOPICS.join(', ');
+  if (!(c.duration > 0)) return 'Duration must be a number of minutes';
+  if (!(c.seats > 0)) return 'Seats must be a number above 0';
+  if (!(c.price >= 0)) return 'Price must be a number (0 for free)';
+  if (!/^https:\/\//i.test(c.meetLink)) return 'Meet link is empty or does not start with https://';
+  return '';
+}
+
 /** A class the website may show and take registrations for. */
 function isOpenUpcoming_(c) {
-  return c.status === 'open' &&
-    c.start instanceof Date && !isNaN(c.start.getTime()) && c.start.getTime() > Date.now() &&
-    /^[a-z0-9-]{3,60}$/.test(c.id) &&
-    c.title !== '' && TOPICS.indexOf(c.topic) >= 0 &&
-    c.duration > 0 && c.seats > 0 && c.price >= 0;
+  return classProblem_(c) === '';
+}
+
+/** The problem as one line for logs. Never includes the Meet link. */
+function problemText_(p) {
+  return 'row ' + p.row + ' (' + p.classId + '): ' + p.reason;
 }
 
 function seatsTaken_(registrations, classId, exceptRow) {
@@ -191,10 +246,21 @@ function seatsTaken_(registrations, classId, exceptRow) {
   }).length;
 }
 
-/** Public class list. NEVER add the Meet link or any registration details here. */
-function publicClasses_() {
+/**
+ * Public class list, plus the rows that need fixing (row number, Class ID and reason only).
+ * NEVER add the Meet link or any registration details here.
+ */
+function classList_() {
   var registrations = readRegistrations_();
-  return readClasses_()
+  var rows = readClasses_();
+  var problems = [];
+  rows.forEach(function (c) {
+    var reason = classProblem_(c);
+    if (reason && reason !== 'closed' && reason !== 'past') {
+      problems.push({ row: c.rowNumber, classId: c.id.slice(0, 60), reason: reason });
+    }
+  });
+  var classes = rows
     .filter(isOpenUpcoming_)
     .sort(function (a, b) { return a.start.getTime() - b.start.getTime(); })
     .map(function (c) {
@@ -210,6 +276,27 @@ function publicClasses_() {
         description: c.description,
       };
     });
+  return { classes: classes, problems: problems };
+}
+
+/**
+ * Run from the editor (function list > checkClasses > Run) to see, in the Execution log,
+ * exactly what the website receives and why any row is hidden. Needs no password and
+ * never prints Meet links or personal details.
+ */
+function checkClasses() {
+  readClasses_().forEach(function (c) {
+    var reason = classProblem_(c);
+    console.log('Row ' + c.rowNumber + ' (' + c.id + '): ' +
+      (reason === '' ? 'SHOWN, starts ' + c.start.toISOString() + ' UTC' :
+       reason === 'closed' ? 'hidden: Status is not "open"' :
+       reason === 'past' ? 'hidden: the start time has passed (' + c.start.toISOString() + ' UTC)' :
+       'hidden: ' + reason));
+  });
+  var list = classList_();
+  console.log('The website receives ' + list.classes.length + ' class(es): ' + JSON.stringify(list.classes));
+  console.log('Script time zone: ' + Session.getScriptTimeZone() +
+    '; sheet time zone: ' + SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone());
 }
 
 // ---------- Registering ----------

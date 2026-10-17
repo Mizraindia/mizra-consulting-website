@@ -55,7 +55,7 @@ One row per class. Never put a sample or test class in the LIVE sheet.
 | Duration (minutes) | For example `90` |
 | Seats | For example `100` |
 | Price (USD) | `0` for now (classes are free; the website shows "Free") |
-| Meet link (private) | The Google Meet link. Never shown on the website; sent only by email. |
+| Meet link (private) | The Google Meet link, starting with `https://`. Required: a class without one is not shown. Never shown on the website; sent only by email. |
 | Status | `open` to show it on the site, `closed` to hide it |
 | Description (optional) | A short description, or leave empty |
 
@@ -117,6 +117,26 @@ status `open`. (Paid classes need the payment stage.)
 
 On the live site, `/student-portal` must still say "Master classes are coming" until
 `CLASS_REGISTRATION_OPEN` is set to `true` for Production and the site is redeployed.
+
+## If a class does not show on the website
+
+1. **Ask the script directly (no password needed).** In the Apps Script editor, choose
+   **checkClasses** in the function list at the top and click **Run**. The Execution log lists every
+   row of the Classes tab as **SHOWN** or **hidden: reason** (for example "Start is not a date and
+   time"), then exactly what the website receives. It never prints Meet links or personal details.
+   If you pasted a new version of the script, save it first.
+2. **Look at the page message.** "New classes are being scheduled" means the script answered but
+   no row qualified: use step 1. "We could not load the class list just now" means the call failed:
+   use step 3.
+3. **Read Vercel's logs.** Vercel → project → **Logs** (or the deployment → **Runtime Logs**), and search
+   for `Classes`. Each failure has a plain reason, for example "CLASSES_SCRIPT_SECRET in Vercel does
+   not match SHARED_SECRET in the script", "CLASSES_SCRIPT_URL is not set for this environment", or
+   "Classes sheet row 2 (product-101) is not shown: Meet link is empty". Logs never contain the
+   password, the script address or Meet links.
+4. **Apps Script's own record.** **Executions** (left menu) → click a run of `doPost`. A refused call
+   says "Refused: the password from the website does not match SHARED_SECRET". A list call says how
+   many classes were shown and which rows were not. A run marked **Completed** only means the script
+   answered, not that it answered with classes.
 
 ## 5. Razorpay for paid classes (not needed while classes are free)
 

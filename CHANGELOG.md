@@ -4,6 +4,20 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Classes not showing: diagnosis and fixes
+
+- Production builds were removing every log line, including errors, so Vercel's logs could never
+  show why a form or the classes sheet failed. Errors and warnings are now kept (debug lines are still removed).
+- Every failed call to the classes script is logged with a plain reason (setting missing, password
+  mismatch, web page instead of data, no answer). Logs never contain the password, script address or Meet links.
+- The script reports rows it cannot show (row number, Class ID, reason); the website logs them.
+  New `checkClasses` function to run from the Apps Script editor.
+- More forgiving sheet reading: a start typed as text (`2026-11-06 19:00`, India time) and a topic
+  in different letter case now work; spaces or line breaks around the shared password are ignored.
+- Stricter where it matters: a class with no Meet link, or a price that is empty or not a number
+  (for example `$10`), is no longer shown, instead of being shown without a join link or as free.
+- 4 new tests (31 in total).
+
 ### Phase D, stage 3: free classes, waiting list, reminders, cancel links (registration still switched OFF)
 
 - Master classes are free for now: the holding page and the FAQ say "Classes are free for now", and

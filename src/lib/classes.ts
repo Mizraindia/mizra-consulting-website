@@ -31,15 +31,39 @@ export function paymentsReady(): boolean {
   return paymentsConfigured();
 }
 
+// Script answers that are part of normal use and need no log line.
+const EXPECTED_ERRORS = ['duplicate', 'full', 'closed', 'not_found', 'too_late', 'not_cancellable', 'busy', 'invalid'];
+
+const HINTS: Record<string, string> = {
+  unauthorised: 'CLASSES_SCRIPT_SECRET in Vercel does not match SHARED_SECRET in the script (or SHARED_SECRET is not set)',
+  'script error': 'the script hit an error; open Apps Script > Executions for details',
+  'unknown action': 'the deployed script is an older version; deploy a new version',
+};
+
+/**
+ * Calls the classes script. Every failure is logged to Vercel's logs with a plain reason.
+ * Logs never include the secret, the script address, the Meet link or personal details.
+ */
 async function callScript<T>(body: Record<string, unknown>, revalidate?: number): Promise<T | null> {
-  const url = process.env.CLASSES_SCRIPT_URL;
-  const secret = process.env.CLASSES_SCRIPT_SECRET;
+  const action = String(body.action);
+  // Trimmed: a space or line break pasted into Vercel with the value must not break the call.
+  const url = process.env.CLASSES_SCRIPT_URL?.trim();
+  const secret = process.env.CLASSES_SCRIPT_SECRET?.trim();
   if (!url || !secret) {
-    console.error('CLASSES_SCRIPT_URL or CLASSES_SCRIPT_SECRET is not set');
+    const missing = [!url && 'CLASSES_SCRIPT_URL', !secret && 'CLASSES_SCRIPT_SECRET'].filter(Boolean).join(' and ');
+    console.error(`Classes script "${action}" not called: ${missing} is not set for this environment`);
     return null;
   }
+  // Web app addresses end in /exec (Workspace accounts have /a/macros/<domain>/ in the middle).
+  // A /dev address works only for the signed-in owner, never for the website.
+  if (!/^https:\/\/script\.google\.com\/(a\/macros\/[^/]+|macros)\/s\/[^/]+\/exec$/.test(url) && !/^http:\/\/localhost:\d+/.test(url)) {
+    console.error(
+      `Classes script "${action}": CLASSES_SCRIPT_URL does not look like a deployed web app address ending in /exec${url.endsWith('/dev') ? ' (it ends in /dev, the test address)' : ''}`,
+    );
+  }
+  let res: Response;
   try {
-    const res = await fetch(url, {
+    res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ secret, ...body }),
@@ -47,11 +71,26 @@ async function callScript<T>(body: Record<string, unknown>, revalidate?: number)
       signal: AbortSignal.timeout(25000),
       ...(revalidate === undefined ? { cache: 'no-store' as const } : { next: { revalidate } }),
     });
-    return (await res.json()) as T;
   } catch (error) {
-    console.error('Classes script call failed:', error);
+    const reason = error instanceof Error && error.name === 'TimeoutError' ? 'no answer within 25 seconds' : String(error);
+    console.error(`Classes script "${action}" could not be reached: ${reason}`);
     return null;
   }
+  const text = await res.text().catch(() => '');
+  let reply: unknown;
+  try {
+    reply = JSON.parse(text);
+  } catch {
+    const page = /<html|<!doctype/i.test(text) ? 'a web page (often a Google sign-in page: check "Who has access: Anyone")' : 'something that is not JSON';
+    console.error(`Classes script "${action}" answered HTTP ${res.status} with ${page}, not the expected data`);
+    return null;
+  }
+  if (!res.ok) console.error(`Classes script "${action}" answered HTTP ${res.status}`);
+  const error = (reply as { ok?: unknown; error?: unknown })?.ok === false ? String((reply as { error?: unknown }).error) : '';
+  if (error && !EXPECTED_ERRORS.includes(error)) {
+    console.error(`Classes script refused "${action}": ${error}${HINTS[error] ? ` (${HINTS[error]})` : ''}`);
+  }
+  return reply as T;
 }
 
 /** How often seat counts are refreshed from the sheet, in seconds. */
@@ -60,9 +99,39 @@ export const CLASS_DATA_SECONDS = 10;
 /** Upcoming open classes, refreshed about every 10 seconds. null means the list could not be loaded. */
 export async function getClasses(): Promise<PublicClass[] | null> {
   if (!isRegistrationOpen()) return [];
-  const reply = await callScript<{ ok?: boolean; classes?: PublicClass[] }>({ action: 'list' }, CLASS_DATA_SECONDS);
-  if (!reply?.ok || !Array.isArray(reply.classes)) return null;
+  const reply = await callScript<{ ok?: boolean; classes?: PublicClass[]; problems?: ClassProblem[] }>(
+    { action: 'list' },
+    CLASS_DATA_SECONDS,
+  );
+  if (!reply) return null;
+  if (!reply.ok) return null; // reason already logged by callScript
+  if (!Array.isArray(reply.classes)) {
+    console.error('Classes script "list" answered without a class list; deploy the latest script version');
+    return null;
+  }
+  logClassProblems(reply.problems);
   return reply.classes;
+}
+
+/** A Classes row the script did not show, and why. Row number, Class ID and reason only. */
+interface ClassProblem {
+  row: number;
+  classId: string;
+  reason: string;
+}
+
+// The list is fetched about every 10 seconds; repeat the same warning at most every 10 minutes.
+const lastWarned = new Map<string, number>();
+
+function logClassProblems(problems: unknown) {
+  if (!Array.isArray(problems)) return;
+  const now = Date.now();
+  for (const p of problems as ClassProblem[]) {
+    const line = `Classes sheet row ${Number(p.row)} (${String(p.classId).slice(0, 60)}) is not shown: ${String(p.reason).slice(0, 200)}`;
+    if (now - (lastWarned.get(line) ?? 0) < 10 * 60 * 1000) continue;
+    lastWarned.set(line, now);
+    console.warn(line);
+  }
 }
 
 export async function getClass(id: string): Promise<PublicClass | null | undefined> {

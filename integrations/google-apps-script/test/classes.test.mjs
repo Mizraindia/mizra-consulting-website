@@ -64,18 +64,21 @@ function formatDate(date, tz, pattern) {
 
 const uuidFor = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
-function load({ lockFree = true, quota = 1000 } = {}) {
+function load({ lockFree = true, quota = 1000, secretProperty = SECRET } = {}) {
   const sheets = {};
+  const logs = [];
   const sent = [];
   const triggers = [];
   let uuid = 0;
   const book = {
     setSpreadsheetTimeZone() {},
+    getSpreadsheetTimeZone: () => 'Asia/Kolkata',
     getSheetByName: (n) => sheets[n] || null,
     insertSheet: (n) => (sheets[n] = makeSheet(n)),
   };
   const context = {
-    console,
+    console: { log: (m) => logs.push(String(m)), warn: (m) => logs.push(String(m)), error: (m) => logs.push(String(m)) },
+    Session: { getScriptTimeZone: () => 'Asia/Kolkata' },
     Date,
     JSON,
     SpreadsheetApp: {
@@ -89,7 +92,7 @@ function load({ lockFree = true, quota = 1000 } = {}) {
     },
     PropertiesService: {
       getScriptProperties: () => ({
-        getProperty: (k) => ({ SHARED_SECRET: SECRET, OWNER_EMAIL: 'owner@example.com', SITE_URL: 'https://example.test/' })[k] ?? null,
+        getProperty: (k) => ({ SHARED_SECRET: secretProperty, OWNER_EMAIL: 'owner@example.com', SITE_URL: 'https://example.test/' })[k] ?? null,
       }),
     },
     MailApp: { sendEmail: (m) => sent.push(m), getRemainingDailyQuota: () => quota },
@@ -118,7 +121,7 @@ function load({ lockFree = true, quota = 1000 } = {}) {
   vm.runInContext(SOURCE, context);
   context.setup();
   const call = (body) => context.doPost({ postData: { contents: JSON.stringify(body) } }).body;
-  return { sheets, sent, call, context, triggers };
+  return { sheets, sent, call, context, triggers, logs };
 }
 
 function addClass(env, overrides = {}) {
@@ -164,6 +167,68 @@ test('public list shows only open, upcoming, complete classes and never the Meet
   assert.deepEqual(Object.keys(list.classes[0]).sort(),
     ['description', 'durationMinutes', 'id', 'priceUsd', 'seats', 'seatsLeft', 'startUtc', 'title', 'topic']);
   assert.equal(list.classes[0].seatsLeft, 1);
+});
+
+test('the owner\'s sample row is listed, also when the start was typed as text or the topic in other letter case', () => {
+  const env = load();
+  // Exactly the row from the owner's report, with a real date from the sheet.
+  addClass(env, { id: 'product-101', title: 'Product Management 101', start: new Date('2030-11-06T13:30:00Z'), duration: 60, seats: 50 });
+  // The same kind of row, but the start cell holds text and the topic was typed differently.
+  addClass(env, { id: 'text-date', start: '2030-11-06 19:00', topic: ' product  MANAGEMENT ' });
+  const list = env.call({ secret: SECRET, action: 'list' });
+  assert.deepEqual(list.classes.map((c) => c.id), ['product-101', 'text-date']);
+  // 19:00 India time is 13:30 UTC.
+  assert.equal(list.classes[1].startUtc, '2030-11-06T13:30:00.000Z');
+  assert.equal(list.classes[1].topic, 'Product management');
+  assert.equal(list.classes[0].priceUsd, 0);
+  assert.deepEqual(list.problems, []);
+});
+
+test('rows that cannot be shown are reported with row number and reason, never the Meet link', () => {
+  const env = load();
+  addClass(env, { id: 'no-link', meet: '' });
+  addClass(env, { id: 'dollar-price', price: '$10' });
+  addClass(env, { id: 'empty-price', price: '' });
+  addClass(env, { id: 'bad-date', start: '6/11/2030 7pm' });
+  addClass(env, { id: 'bad-topic', topic: 'Cooking' });
+  addClass(env, { id: 'closed-one', status: 'closed' });
+  addClass(env, { id: 'past-one', start: new Date(Date.now() - DAY) });
+  const list = env.call({ secret: SECRET, action: 'list' });
+  assert.deepEqual(list.classes, []);
+  // Closed and past classes are normal, so they are not reported.
+  assert.deepEqual(list.problems.map((p) => [p.row, p.classId]), [[2, 'no-link'], [3, 'dollar-price'], [4, 'empty-price'], [5, 'bad-date'], [6, 'bad-topic']]);
+  assert.match(list.problems[0].reason, /Meet link/);
+  assert.match(list.problems[1].reason, /Price/);
+  assert.match(list.problems[3].reason, /Start/);
+  assert.match(list.problems[4].reason, /Topic/);
+  assert.ok(!JSON.stringify(list).includes('meet.google.com'));
+  assert.ok(env.logs.some((l) => l.includes('row 2 (no-link)')), 'the reason is in the Apps Script log too');
+  // A class without a join link cannot be booked either.
+  assert.equal(env.call(person({ classId: 'no-link' })).error, 'closed');
+});
+
+test('a space or line break around the shared password does not lock the website out', () => {
+  const env = load({ secretProperty: `  ${SECRET}\n` });
+  addClass(env);
+  assert.equal(env.call({ secret: `${SECRET}\n`, action: 'list' }).classes.length, 1);
+  assert.equal(env.call({ secret: 'other', action: 'list' }).error, 'unauthorised');
+  assert.ok(env.logs.some((l) => l.includes('does not match SHARED_SECRET')));
+  assert.ok(!env.logs.some((l) => l.includes(SECRET)), 'the password is never logged');
+  assert.equal(load({ secretProperty: null }).call({ secret: '', action: 'list' }).error, 'unauthorised');
+});
+
+test('checkClasses explains every row in the log without the Meet link', () => {
+  const env = load();
+  addClass(env, { id: 'product-101' });
+  addClass(env, { id: 'closed-one', status: 'closed' });
+  addClass(env, { id: 'no-link', meet: '' });
+  env.context.checkClasses();
+  const log = env.logs.join('\n');
+  assert.match(log, /Row 2 \(product-101\): SHOWN/);
+  assert.match(log, /Row 3 \(closed-one\): hidden: Status/);
+  assert.match(log, /Row 4 \(no-link\): hidden: Meet link/);
+  assert.match(log, /The website receives 1 class/);
+  assert.ok(!log.includes('meet.google.com'));
 });
 
 test('registers, saves the row and emails the Meet link with a calendar file', () => {
