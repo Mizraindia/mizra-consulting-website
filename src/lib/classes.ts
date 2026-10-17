@@ -134,7 +134,16 @@ export async function getClasses(): Promise<PublicClass[] | null> {
     return null;
   }
   logClassProblems(reply.problems);
+  logFacultyNotes((reply as { notes?: unknown }).notes);
   return reply.classes;
+}
+
+/**
+ * Whether this deployment talks to a classes sheet at all. Without both settings (Production
+ * today) the cancel page and cancel endpoint answer 404, as if they did not exist.
+ */
+export function classesConfigured(): boolean {
+  return Boolean(process.env.CLASSES_SCRIPT_URL?.trim() && process.env.CLASSES_SCRIPT_SECRET?.trim());
 }
 
 /** A Classes row the script did not show, and why. Row number, Class ID and reason only. */
@@ -144,17 +153,33 @@ interface ClassProblem {
   reason: string;
 }
 
-// The list is fetched about every 10 seconds; repeat the same warning at most every 10 minutes.
+// The list is fetched about every 10 seconds; repeat the same line at most every 10 minutes.
 const lastWarned = new Map<string, number>();
+
+function logOnce(line: string, level: 'warn' | 'info') {
+  const now = Date.now();
+  if (now - (lastWarned.get(line) ?? 0) < 10 * 60 * 1000) return;
+  lastWarned.set(line, now);
+  console[level](line);
+}
 
 function logClassProblems(problems: unknown) {
   if (!Array.isArray(problems)) return;
-  const now = Date.now();
   for (const p of problems as ClassProblem[]) {
-    const line = `Classes sheet row ${Number(p.row)} (${String(p.classId).slice(0, 60)}) is not shown: ${String(p.reason).slice(0, 200)}`;
-    if (now - (lastWarned.get(line) ?? 0) < 10 * 60 * 1000) continue;
-    lastWarned.set(line, now);
-    console.warn(line);
+    logOnce(`Classes sheet row ${Number(p.row)} (${String(p.classId).slice(0, 60)}) is not shown: ${String(p.reason).slice(0, 200)}`, 'warn');
+  }
+}
+
+/**
+ * For each shown class with a faculty name: whether its LinkedIn address is used or ignored,
+ * and why. The script never includes the name or the address in these notes.
+ */
+function logFacultyNotes(notes: unknown) {
+  if (!Array.isArray(notes)) return;
+  for (const n of notes as { row: number; classId: string; note: string }[]) {
+    const note = String(n.note).slice(0, 200);
+    const line = `Classes sheet row ${Number(n.row)} (${String(n.classId).slice(0, 60)}): ${note}`;
+    logOnce(line, /ignored|not shown/.test(note) ? 'warn' : 'info');
   }
 }
 

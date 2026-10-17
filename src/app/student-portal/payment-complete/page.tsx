@@ -1,7 +1,8 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { CONTACT_EMAIL } from '@/components/LeadFormParts';
-import { markPaidWithScript } from '@/lib/classes';
-import { fetchPayment, tokenFromReference, verifyCallbackSignature } from '@/lib/razorpay';
+import { classesConfigured, markPaidWithScript } from '@/lib/classes';
+import { fetchPayment, paymentsConfigured, tokenFromReference, verifyCallbackSignature } from '@/lib/razorpay';
 
 // Where Razorpay sends the visitor after paying. The details in the address are trusted only
 // if Razorpay's signature checks out; the amount is then confirmed with Razorpay itself.
@@ -67,6 +68,8 @@ const MESSAGES: Record<string, { title: string; text: string }> = {
 };
 
 export default async function PaymentCompletePage({ searchParams }: { searchParams: Search }) {
+  // Payments not set up on this deployment (Production today): a real 404.
+  if (!paymentsConfigured() || !classesConfigured()) notFound();
   const message = MESSAGES[await outcome(await searchParams)];
   return (
     <section className="bg-mz-cream py-20 text-mz-ink sm:py-28">

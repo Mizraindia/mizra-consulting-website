@@ -4,6 +4,22 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Release preparation: wording, LinkedIn addresses, switched-off pages
+
+- Master classes holding page and "How it works": "a practising product owner" is now
+  "practising professionals". The per-class "Taught by a practising {role}: {name}" line is unchanged.
+- Faculty LinkedIn: common forms are tidied before checking (spaces and line breaks removed,
+  `https://` added, `http://` upgraded, `linkedin.com` and country hosts such as `in.linkedin.com`
+  rewritten to `www.linkedin.com`). Every other site is still refused, including look-alikes such as
+  `linkedin.com.evil.com` and `evil-linkedin.com`. checkClasses and Vercel's logs say, for each
+  class with a faculty name, whether the address is used or ignored and why, without printing
+  names or addresses. checkClasses no longer prints faculty names or addresses.
+- While classes are switched off, every `/student-portal/...` address (class pages, cancel,
+  payment-complete) now returns the site's ordinary ready-made 404 page, identical to today's live
+  site. The cancel and payment endpoints answer 404 unless their settings exist.
+- Info lines are kept in production logs alongside errors and warnings.
+- 2 new tests with 27 LinkedIn cases (39 tests in total).
+
 ### Waiting-list email reliability and faculty per class
 
 - Every class email now goes through one path that records the outcome in the "Confirmation

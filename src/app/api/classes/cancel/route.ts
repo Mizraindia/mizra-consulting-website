@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isRateLimited } from '@/lib/leads';
-import { TOKEN_PATTERN, cancelWithScript } from '@/lib/classes';
+import { TOKEN_PATTERN, cancelWithScript, classesConfigured } from '@/lib/classes';
 
 // Cancels a registration or a waiting-list place, using the private token from the email.
 // Only a POST (the button on the cancel page) cancels: email security scanners that open
 // links with GET can never cancel anyone by accident.
 export async function POST(request: NextRequest) {
+  if (!classesConfigured()) return NextResponse.json({ ok: false, error: 'not_found' }, { status: 404 });
   const ip =
     request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (ip !== 'unknown' && isRateLimited(ip, 'classes')) {

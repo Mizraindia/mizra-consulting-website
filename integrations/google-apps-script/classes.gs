@@ -140,8 +140,9 @@ function doPost(e) {
     if (request.action === 'list') {
       var list = classList_();
       console.log('list: ' + list.classes.length + ' class(es) shown' +
-        (list.problems.length ? '; not shown: ' + list.problems.map(problemText_).join('; ') : ''));
-      return reply_({ ok: true, classes: list.classes, problems: list.problems });
+        (list.problems.length ? '; not shown: ' + list.problems.map(problemText_).join('; ') : '') +
+        (list.notes.length ? '; faculty: ' + list.notes.map(function (n) { return 'row ' + n.row + ' (' + n.classId + '): ' + n.note; }).join('; ') : ''));
+      return reply_({ ok: true, classes: list.classes, problems: list.problems, notes: list.notes });
     }
     if (request.action === 'register') return reply_(register_(request));
     if (request.action === 'markPaid') return reply_(markPaid_(request));
@@ -176,7 +177,7 @@ function readClasses_() {
         description: String(row[9] || '').trim(),
         facultyRole: oneLine_(row[10], 60),
         facultyName: oneLine_(row[11], 80),
-        facultyLinkedIn: linkedInUrl_(row[12]),
+        linkedIn: linkedIn_(row[12]),
       };
     })
     .filter(function (c) { return c.id !== ''; });
@@ -186,10 +187,65 @@ function oneLine_(value, max) {
   return String(value == null ? '' : value).replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
-/** Only https://www.linkedin.com/ addresses are used; anything else is ignored (''). */
-function linkedInUrl_(value) {
-  var url = String(value == null ? '' : value).trim();
-  return /^https:\/\/www\.linkedin\.com\/[A-Za-z0-9\-._~%\/?=&+]*$/.test(url) && url.length <= 200 ? url : '';
+/**
+ * Reads the Faculty LinkedIn cell. Common forms are tidied first: spaces and line breaks
+ * removed, https:// added when missing, http:// upgraded, and linkedin.com with or without
+ * www or a country prefix (in.linkedin.com, uk.linkedin.com) rewritten to www.linkedin.com.
+ * Every other site is refused, including look-alikes such as linkedin.com.evil.com.
+ * Returns { url, status }: url is '' when nothing is used; status explains why, and never
+ * contains the address itself (it usually includes the person's name).
+ */
+function linkedIn_(value) {
+  var raw = String(value == null ? '' : value).replace(/\s+/g, '');
+  if (raw === '') return { url: '', status: 'empty' };
+  var tidied = [];
+  var scheme = raw.match(/^([a-z][a-z0-9+.-]*):\/\//i);
+  if (!scheme) {
+    if (/^[a-z][a-z0-9+.-]*:/i.test(raw) && !/^[^:\/]+\.[a-z]{2,}(:|\/|$)/i.test(raw)) {
+      return { url: '', status: 'ignored: not a web address' };
+    }
+    raw = 'https://' + raw.replace(/^\/\//, '');
+    tidied.push('added https://');
+  } else if (scheme[1].toLowerCase() === 'http') {
+    raw = 'https://' + raw.slice(scheme[0].length);
+    tidied.push('changed http:// to https://');
+  } else if (scheme[1].toLowerCase() !== 'https') {
+    return { url: '', status: 'ignored: not a web address' };
+  }
+  var m = raw.match(/^https:\/\/([^\/?#]*)([\/?#].*)?$/i);
+  if (!m) return { url: '', status: 'ignored: not a web address' };
+  var host = m[1].toLowerCase();
+  var rest = m[2] || '';
+  if (host.indexOf('@') >= 0 || host.indexOf(':') >= 0) {
+    return { url: '', status: 'ignored: the address hides another site (contains @ or a port)' };
+  }
+  if (host !== 'linkedin.com' && !/^[a-z]{2,3}\.linkedin\.com$/.test(host)) {
+    return { url: '', status: 'ignored: not a LinkedIn address (only linkedin.com is accepted)' };
+  }
+  if (host !== 'www.linkedin.com') tidied.push('changed the site name to www.linkedin.com');
+  rest = rest.replace(/#.*$/, '');
+  if (rest.charAt(0) !== '/') rest = '/' + rest;
+  if (rest === '/' || rest.charAt(1) === '?') return { url: '', status: 'ignored: it is the LinkedIn home page, not a profile' };
+  try {
+    // Letters such as é or ö in a profile address, written the way browsers send them.
+    rest = rest.replace(/[^\x00-\x7F]+/g, function (s) { return encodeURIComponent(s); });
+  } catch (e) {
+    return { url: '', status: 'ignored: contains characters a LinkedIn address cannot have' };
+  }
+  if (!/^\/[A-Za-z0-9\-._~%\/?=&+]*$/.test(rest)) {
+    return { url: '', status: 'ignored: contains characters a LinkedIn address cannot have' };
+  }
+  var url = 'https://www.linkedin.com' + rest;
+  if (url.length > 200) return { url: '', status: 'ignored: longer than 200 characters' };
+  return { url: url, status: tidied.length ? 'used, after tidying (' + tidied.join(', ') + ')' : 'used' };
+}
+
+/** What happens to the faculty line of a class, for logs. Never includes names or addresses. */
+function facultyNote_(c) {
+  if (!c.facultyName) return '';
+  if (!c.facultyRole) return 'faculty name not shown: Faculty role is empty, so there is no "Taught by" line';
+  if (c.linkedIn.status === 'empty') return 'faculty name shown without a link (no LinkedIn address given)';
+  return 'faculty LinkedIn ' + c.linkedIn.status;
 }
 
 /** The topic exactly as listed in TOPICS, ignoring case and extra spaces; '' if it is not one. */
@@ -316,10 +372,13 @@ function classList_() {
         description: c.description,
         facultyRole: c.facultyRole,
         facultyName: c.facultyRole ? c.facultyName : '',
-        facultyLinkedIn: c.facultyRole && c.facultyName ? c.facultyLinkedIn : '',
+        facultyLinkedIn: c.facultyRole && c.facultyName ? c.linkedIn.url : '',
       };
     });
-  return { classes: classes, problems: problems };
+  // For every shown class with a faculty name: whether the LinkedIn address is used, and why not.
+  var notes = rows.filter(isOpenUpcoming_).filter(function (c) { return facultyNote_(c) !== ''; })
+    .map(function (c) { return { row: c.rowNumber, classId: c.id, note: facultyNote_(c) }; });
+  return { classes: classes, problems: problems, notes: notes };
 }
 
 /**
@@ -334,10 +393,18 @@ function checkClasses() {
       (reason === '' ? 'SHOWN, starts ' + c.start.toISOString() + ' UTC' :
        reason === 'closed' ? 'hidden: Status is not "open"' :
        reason === 'past' ? 'hidden: the start time has passed (' + c.start.toISOString() + ' UTC)' :
-       'hidden: ' + reason));
+       'hidden: ' + reason) +
+      (facultyNote_(c) ? '; ' + facultyNote_(c) : ''));
   });
   var list = classList_();
-  console.log('The website receives ' + list.classes.length + ' class(es): ' + JSON.stringify(list.classes));
+  // Faculty names and LinkedIn addresses are personal data: say only whether they are set.
+  var shown = list.classes.map(function (c) {
+    var copy = JSON.parse(JSON.stringify(c));
+    copy.facultyName = c.facultyName ? '(set)' : '';
+    copy.facultyLinkedIn = c.facultyLinkedIn ? '(set)' : '';
+    return copy;
+  });
+  console.log('The website receives ' + shown.length + ' class(es): ' + JSON.stringify(shown));
   console.log('Script time zone: ' + Session.getScriptTimeZone() +
     '; sheet time zone: ' + SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone());
 }

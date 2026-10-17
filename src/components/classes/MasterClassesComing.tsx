@@ -1,7 +1,7 @@
 import ClassInterestForm from '@/components/ClassInterestForm';
 
 // The "Master classes are coming" holding page, shown while registration is switched off
-// (CLASS_REGISTRATION_OPEN is not "true"). Wording unchanged from the live holding page.
+// (CLASS_REGISTRATION_OPEN is not "true").
 export default function MasterClassesComing() {
   return (
     <section className="pt-16 pb-20 bg-gradient-to-b from-primary-50 to-white">
@@ -13,8 +13,8 @@ export default function MasterClassesComing() {
           Master classes are coming
         </h1>
         <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-          Live online classes in product management, product ownership, HR and more, taught by a
-          practising product owner. Classes are free for now. Leave your email and we&apos;ll tell you as
+          Live online classes in product management, product ownership, HR and more, taught by
+          practising professionals. Classes are free for now. Leave your email and we&apos;ll tell you as
           soon as dates are open for registration.
         </p>
         <div className="mt-10">

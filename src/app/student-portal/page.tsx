@@ -30,7 +30,7 @@ const STEPS = [
   { title: 'Pick a class', text: 'Filter by topic and choose the session that suits you.' },
   { title: 'Register in a minute', text: 'Name, email and WhatsApp number are all we need. No account to create.' },
   { title: 'Get your link', text: 'Your join link and calendar invite arrive by email.' },
-  { title: 'Join live', text: 'Learn from a practising product owner and ask your own questions.' },
+  { title: 'Join live', text: 'Learn from practising professionals and ask your own questions.' },
 ];
 
 const FAQ = [

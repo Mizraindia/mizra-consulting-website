@@ -193,24 +193,83 @@ test('the owner\'s sample row is listed, also when the start was typed as text o
   assert.deepEqual(list.problems, []);
 });
 
-test('faculty: role, optional name and LinkedIn; only https://www.linkedin.com/ links are passed on', () => {
+test('faculty: role, optional name and LinkedIn', () => {
   const env = load();
   const li = 'https://www.linkedin.com/in/asha-rao-123/';
   addClass(env, { id: 'full', facultyRole: 'Product Owner', facultyName: 'Asha Rao', facultyLinkedIn: li });
   addClass(env, { id: 'no-name', facultyRole: 'HR Business Partner', facultyLinkedIn: li });
   addClass(env, { id: 'no-role', facultyName: 'Asha Rao', facultyLinkedIn: li });
-  addClass(env, { id: 'bad-link-1', facultyRole: 'Product Manager', facultyName: 'A B', facultyLinkedIn: 'http://www.linkedin.com/in/x' });
-  addClass(env, { id: 'bad-link-2', facultyRole: 'Product Manager', facultyName: 'A B', facultyLinkedIn: 'https://www.linkedin.com.evil.example/in/x' });
-  addClass(env, { id: 'bad-link-3', facultyRole: 'Product Manager', facultyName: 'A B', facultyLinkedIn: 'https://linkedin.com/in/x' });
-  addClass(env, { id: 'bad-link-4', facultyRole: 'Product Manager', facultyName: 'A B', facultyLinkedIn: 'https://www.linkedin.com/in/x"><script>' });
   const byId = Object.fromEntries(env.call({ secret: SECRET, action: 'list' }).classes.map((c) => [c.id, c]));
   assert.deepEqual([byId.full.facultyRole, byId.full.facultyName, byId.full.facultyLinkedIn], ['Product Owner', 'Asha Rao', li]);
   assert.deepEqual([byId['no-name'].facultyName, byId['no-name'].facultyLinkedIn], ['', '']);
   assert.deepEqual([byId['no-role'].facultyRole, byId['no-role'].facultyName, byId['no-role'].facultyLinkedIn], ['', '', '']);
-  for (const id of ['bad-link-1', 'bad-link-2', 'bad-link-3', 'bad-link-4']) {
-    assert.equal(byId[id].facultyLinkedIn, '', id);
-    assert.equal(byId[id].facultyName, 'A B', id);
-  }
+});
+
+// [what the owner typed, the address used ('' = ignored), what the log says]
+const LINKEDIN_CASES = [
+  ['https://www.linkedin.com/in/asha-rao/', 'https://www.linkedin.com/in/asha-rao/', /^faculty LinkedIn used$/],
+  ['  https://www.linkedin.com/in/asha-rao/\n', 'https://www.linkedin.com/in/asha-rao/', /^faculty LinkedIn used$/],
+  ['https://www.linkedin.com/in/\nasha-rao/', 'https://www.linkedin.com/in/asha-rao/', /^faculty LinkedIn used$/],
+  ['www.linkedin.com/in/asha-rao', 'https://www.linkedin.com/in/asha-rao', /added https:\/\//],
+  ['linkedin.com/in/asha-rao', 'https://www.linkedin.com/in/asha-rao', /added https:\/\/, changed the site name/],
+  ['in.linkedin.com/in/asha-rao', 'https://www.linkedin.com/in/asha-rao', /changed the site name to www\.linkedin\.com/],
+  ['https://uk.linkedin.com/in/asha-rao?trk=x', 'https://www.linkedin.com/in/asha-rao?trk=x', /changed the site name/],
+  ['HTTPS://WWW.LinkedIn.com/in/asha-rao', 'https://www.linkedin.com/in/asha-rao', /^faculty LinkedIn used$/],
+  ['http://www.linkedin.com/in/asha-rao', 'https://www.linkedin.com/in/asha-rao', /changed http:\/\/ to https:\/\//],
+  ['//www.linkedin.com/in/asha-rao', 'https://www.linkedin.com/in/asha-rao', /added https:\/\//],
+  ['https://www.linkedin.com/in/asha-rao#about', 'https://www.linkedin.com/in/asha-rao', /^faculty LinkedIn used$/],
+  ['https://www.linkedin.com/in/jürgen', 'https://www.linkedin.com/in/j%C3%BCrgen', /^faculty LinkedIn used$/],
+  ['https://linkedin.com.evil.com/in/asha', '', /ignored: not a LinkedIn address/],
+  ['https://evil-linkedin.com/in/asha', '', /ignored: not a LinkedIn address/],
+  ['https://www.linkedin.com.evil.com/in/asha', '', /ignored: not a LinkedIn address/],
+  ['https://linkedin.co/in/asha', '', /ignored: not a LinkedIn address/],
+  ['https://a.b.linkedin.com/in/asha', '', /ignored: not a LinkedIn address/],
+  ['https://www.linkedin.com@evil.com/in/asha', '', /ignored: the address hides another site/],
+  ['https://www.linkedin.com:8080/in/asha', '', /ignored: the address hides another site/],
+  ['ftp://www.linkedin.com/in/asha', '', /ignored: not a web address/],
+  ['javascript:alert(1)', '', /ignored: not a web address/],
+  ['mailto:asha@example.com', '', /ignored: not a web address/],
+  ['https://www.linkedin.com/', '', /ignored: it is the LinkedIn home page/],
+  ['linkedin.com', '', /ignored: it is the LinkedIn home page/],
+  ['https://www.linkedin.com/in/x"><script>', '', /ignored: contains characters/],
+  [`https://www.linkedin.com/in/${'a'.repeat(200)}`, '', /ignored: longer than 200/],
+  ['', '', /without a link \(no LinkedIn address given\)/],
+];
+
+test('faculty LinkedIn: common forms are tidied, every other site is refused, and the log says why', () => {
+  const env = load();
+  LINKEDIN_CASES.forEach(([typed], i) =>
+    addClass(env, { id: `li-${i}`, facultyRole: 'Product Owner', facultyName: 'Asha Rao', facultyLinkedIn: typed }));
+  const list = env.call({ secret: SECRET, action: 'list' });
+  const byId = Object.fromEntries(list.classes.map((c) => [c.id, c]));
+  const notes = Object.fromEntries(list.notes.map((n) => [n.classId, n]));
+  LINKEDIN_CASES.forEach(([typed, used, why], i) => {
+    assert.equal(byId[`li-${i}`].facultyLinkedIn, used, `address for ${JSON.stringify(typed)}`);
+    assert.equal(byId[`li-${i}`].facultyName, 'Asha Rao');
+    assert.match(notes[`li-${i}`].note, why, `log for ${JSON.stringify(typed)}`);
+    assert.equal(notes[`li-${i}`].row, i + 2);
+  });
+  // The notes and the Apps Script log never contain names or addresses.
+  const said = JSON.stringify(list.notes) + env.logs.join('\n');
+  assert.ok(!/asha|\/in\/|evil/i.test(said), said);
+});
+
+test('faculty notes: a name without a role is reported, and checkClasses explains each row', () => {
+  const env = load();
+  addClass(env, { id: 'no-role', facultyName: 'Asha Rao', facultyLinkedIn: 'linkedin.com/in/asha' });
+  addClass(env, { id: 'used', facultyRole: 'Product Owner', facultyName: 'Asha Rao', facultyLinkedIn: 'in.linkedin.com/in/asha' });
+  addClass(env, { id: 'evil', facultyRole: 'Product Owner', facultyName: 'Asha Rao', facultyLinkedIn: 'https://evil-linkedin.com/in/asha' });
+  addClass(env, { id: 'no-faculty' });
+  const list = env.call({ secret: SECRET, action: 'list' });
+  assert.deepEqual(list.notes.map((n) => n.classId), ['no-role', 'used', 'evil']);
+  assert.match(list.notes[0].note, /Faculty role is empty/);
+  env.context.checkClasses();
+  const log = env.logs.join('\n');
+  assert.match(log, /Row 3 \(used\): SHOWN.*; faculty LinkedIn used, after tidying/);
+  assert.match(log, /Row 4 \(evil\): SHOWN.*; faculty LinkedIn ignored: not a LinkedIn address/);
+  assert.match(log, /Row 5 \(no-faculty\): SHOWN, starts [^;]*$/m);
+  assert.match(log, /"facultyName":"\(set\)","facultyLinkedIn":"\(set\)"/);
+  assert.ok(!/asha/i.test(log), 'no names or profile addresses in the log');
 });
 
 test('setup adds the faculty columns to an existing Classes tab without moving or deleting data', () => {

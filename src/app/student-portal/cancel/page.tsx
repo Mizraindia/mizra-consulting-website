@@ -1,7 +1,8 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import CancelButton from '@/components/classes/CancelButton';
 import LocalTime from '@/components/classes/LocalTime';
-import { lookupRegistration } from '@/lib/classes';
+import { classesConfigured, lookupRegistration } from '@/lib/classes';
 
 // Opened from the cancel link in every class email. Shows which class it is and asks the
 // visitor to confirm; nothing is cancelled until they press the button.
@@ -11,6 +12,8 @@ export const metadata = { title: 'Cancel a master class place', robots: { index:
 type Search = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function CancelPage({ searchParams }: { searchParams: Search }) {
+  // No classes sheet on this deployment (Production while classes are off): a real 404.
+  if (!classesConfigured()) notFound();
   const raw = (await searchParams).token;
   const token = (Array.isArray(raw) ? raw[0] : raw) ?? '';
   const found = await lookupRegistration(token);

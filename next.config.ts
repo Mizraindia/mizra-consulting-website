@@ -11,9 +11,9 @@ const nextConfig: NextConfig = {
   
   // Compiler optimizations
   compiler: {
-    // Drop debug output in production, but keep errors and warnings: they are the only way
-    // to see in Vercel's logs why a form or the classes sheet failed.
-    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+    // Drop debug output in production, but keep errors, warnings and info lines: they are the
+    // only way to see in Vercel's logs why a form or the classes sheet failed.
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn', 'info'] } : false,
   },
   
   // Performance optimizations

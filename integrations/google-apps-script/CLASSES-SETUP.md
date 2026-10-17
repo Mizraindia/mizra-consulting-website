@@ -60,7 +60,7 @@ One row per class. Never put a sample or test class in the LIVE sheet.
 | Description (optional) | A short description, or leave empty |
 | Faculty role | For example `Product Owner`, `Product Manager` or `HR Business Partner`. The class page says "Taught by a practising Product Owner". Leave empty for no "Taught by" line. |
 | Faculty name (optional) | For example `Asha Rao`. Shown after the role: "Taught by a practising Product Owner: Asha Rao". |
-| Faculty LinkedIn (optional) | The full profile address, starting with `https://www.linkedin.com/`. The name becomes a link to it (new tab). Any other address is ignored. Used only when a name is given. |
+| Faculty LinkedIn (optional) | The profile address, for example `https://www.linkedin.com/in/asha-rao`. Copied forms are tidied for you: spaces and line breaks are removed, `https://` is added if missing, and `linkedin.com`, `in.linkedin.com` and similar become `www.linkedin.com`. Any other site is ignored. The name becomes a link to it (new tab). Used only when a name is given. **checkClasses** and Vercel's logs say for each class whether the address is used or ignored, and why. |
 
 A class appears on the website only when every column except Description is filled, the status is
 `open` and the start time is in the future. Changes, including the "seats left" number, show on the

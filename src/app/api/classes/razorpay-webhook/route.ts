@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { markPaidWithScript } from '@/lib/classes';
-import { tokenFromReference, verifyWebhookSignature } from '@/lib/razorpay';
+import { paymentsConfigured, tokenFromReference, verifyWebhookSignature } from '@/lib/razorpay';
 
 // Razorpay payment notifications for master classes. In Razorpay, point the webhook at
 // https://<site>/api/classes/razorpay-webhook with the "payment_link.paid" event.
 // Every request must carry a valid X-Razorpay-Signature for its exact raw body, or it is
 // rejected and nothing is written. Repeats are harmless: the script keys on the payment ID.
 export async function POST(request: NextRequest) {
+  // Payments not set up on this deployment (Production today): as if the address did not exist.
+  if (!paymentsConfigured()) return NextResponse.json({ ok: false, error: 'not found' }, { status: 404 });
   const rawBody = await request.text();
   if (!verifyWebhookSignature(rawBody, request.headers.get('x-razorpay-signature'))) {
     console.warn('Rejected a Razorpay webhook with a missing or invalid signature');
