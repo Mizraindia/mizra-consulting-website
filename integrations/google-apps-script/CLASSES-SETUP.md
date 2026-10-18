@@ -88,7 +88,7 @@ for **Preview** and once for **Production**, with different values:
 | --- | --- | --- |
 | `CLASSES_SCRIPT_URL` | TEST web app URL | LIVE web app URL |
 | `CLASSES_SCRIPT_SECRET` | TEST `SHARED_SECRET` | LIVE `SHARED_SECRET` |
-| `CLASS_REGISTRATION_OPEN` | `true` | leave **unset** until the lawyer approves and you say go |
+| `CLASS_REGISTRATION_OPEN` | `true` | leave **unset** until you say go |
 
 Then **Deployments → newest `revamp` deployment → ⋯ → Redeploy**. Settings only take effect after a
 redeploy.
@@ -174,7 +174,7 @@ for Preview and **Live Mode** keys for Production. Never paste a key secret into
 2. If it is not active, click **Request** (or **Enable**) and complete the form. Razorpay's partners
    approve it; it can take from a few days to about two weeks.
 3. Razorpay asks for these pages on your website: Terms and Conditions, Privacy policy, Refund and
-   Cancellation policy, and Shipping (delivery) policy. Mizra has draft Terms and Privacy pages; the
+   Cancellation policy, and Shipping (delivery) policy. Mizra's Terms and Privacy pages are approved; the
    Refund and Cancellation and the Shipping pages still need to be written and approved.
 4. Final check: in Test Mode, open **Payment Links → Create Payment Link** and look for **USD** in the
    currency list. If USD is missing, international payments are not active on the account yet.
@@ -207,7 +207,7 @@ for Preview and **Live Mode** keys for Production. Never paste a key secret into
 5. Close the payment page without paying instead: the row stays "awaiting payment", and the seat is
    released after 30 minutes.
 
-**Going live** (only after the lawyer's approval and your go): repeat the keys and the webhook in
+**Going live** (only after your go): repeat the keys and the webhook in
 **Live Mode**, pointing the webhook at `https://mizraconsulting.com/api/classes/razorpay-webhook`, and
 add the three settings for **Production**. If you ever see an email titled "Master class payment
 needs your attention", the script has flagged a payment for you to check (for example a duplicate

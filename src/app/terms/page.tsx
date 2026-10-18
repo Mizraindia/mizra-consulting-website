@@ -2,13 +2,11 @@ import LegalPage from '@/components/LegalPage';
 import { pageMetadata } from '@/lib/metadata';
 import { COMPANY } from '@/lib/site';
 
-// DRAFT written from the owner's workbook answers (10-Privacy-and-Terms).
-// Kept out of search results (noindex) until a lawyer has reviewed it.
+// Approved by the owner's lawyer (October 2026). Change the wording only with new approval.
 export const metadata = pageMetadata({
   path: '/terms',
   title: 'Terms',
   description: 'How Mizra Consulting handles scope, payment, ownership and confidentiality on projects.',
-  noindex: true,
 });
 
 export default function TermsPage() {
