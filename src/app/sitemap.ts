@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/site';
 import { getAllPosts } from '@/lib/blog';
+import { getClasses, isRegistrationOpen } from '@/lib/classes';
 
 // Only real, finished pages. /privacy and /terms are left out until a lawyer has
 // reviewed them (they are also marked noindex until then). Articles are added
@@ -18,7 +19,9 @@ const routes = [
   '/blog',
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 3600;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const pages: MetadataRoute.Sitemap = routes.map((route) => ({
@@ -35,5 +38,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...pages, ...articles];
+  // Class pages exist only while registration is switched on.
+  const classes: MetadataRoute.Sitemap = isRegistrationOpen()
+    ? ((await getClasses()) ?? []).map((c) => ({
+        url: `${SITE_URL}/student-portal/${c.id}`,
+        lastModified: now,
+        changeFrequency: 'daily' as const,
+        priority: 0.6,
+      }))
+    : [];
+
+  return [...pages, ...articles, ...classes];
 }

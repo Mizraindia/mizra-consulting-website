@@ -81,21 +81,24 @@ export function checkSubmission(body: unknown): CheckResult {
 
 // Best-effort limit per visitor. Vercel may run several copies of the server,
 // each with its own memory, so this slows abuse rather than stopping it outright.
-const RATE_LIMIT = 5;
+// Each form has its own bucket. Class registration allows more, because a whole college or
+// office often registers over one network (one IP address).
+const RATE_LIMITS = { enquiry: 5, classes: 20 } as const;
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const recentRequests = new Map<string, number[]>();
 
-export function isRateLimited(ip: string): boolean {
+export function isRateLimited(ip: string, bucket: keyof typeof RATE_LIMITS = 'enquiry'): boolean {
   const now = Date.now();
-  const hits = (recentRequests.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  const key = `${bucket}:${ip}`;
+  const hits = (recentRequests.get(key) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
   hits.push(now);
-  recentRequests.set(ip, hits);
+  recentRequests.set(key, hits);
   if (recentRequests.size > 5000) {
     for (const [key, times] of recentRequests) {
       if (times.every((t) => now - t >= RATE_WINDOW_MS)) recentRequests.delete(key);
     }
   }
-  return hits.length > RATE_LIMIT;
+  return hits.length > RATE_LIMITS[bucket];
 }
 
 /**

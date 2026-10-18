@@ -4,6 +4,91 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Release preparation: wording, LinkedIn addresses, switched-off pages
+
+- Master classes holding page and "How it works": "a practising product owner" is now
+  "practising professionals". The per-class "Taught by a practising {role}: {name}" line is unchanged.
+- Faculty LinkedIn: common forms are tidied before checking (spaces and line breaks removed,
+  `https://` added, `http://` upgraded, `linkedin.com` and country hosts such as `in.linkedin.com`
+  rewritten to `www.linkedin.com`). Every other site is still refused, including look-alikes such as
+  `linkedin.com.evil.com` and `evil-linkedin.com`. checkClasses and Vercel's logs say, for each
+  class with a faculty name, whether the address is used or ignored and why, without printing
+  names or addresses. checkClasses no longer prints faculty names or addresses.
+- While classes are switched off, every `/student-portal/...` address (class pages, cancel,
+  payment-complete) now returns the site's ordinary ready-made 404 page, identical to today's live
+  site. The cancel and payment endpoints answer 404 unless their settings exist.
+- Info lines are kept in production logs alongside errors and warnings.
+- 2 new tests with 27 LinkedIn cases (39 tests in total).
+
+### Waiting-list email reliability and faculty per class
+
+- Every class email now goes through one path that records the outcome in the "Confirmation
+  email" column (`yes`, `yes (place opened up)`, `waiting list email sent`, or
+  `FAILED (..., attempt N): reason`), logs a clear reason in Apps Script's Executions, emails the
+  owner on the first failure, and is retried by the 15-minute timer (up to 5 times, until the class
+  starts). It is never sent twice: a send cut off half-way is marked "sending" and not retried.
+  Before, a failed "place opened up" email was swallowed with a short log line and the column
+  looked the same as a sent waiting-list email.
+- If Google's daily email limit is used up, the script records that instead of trying, and the
+  timer sends the email after the reset.
+- Classes tab: new columns "Faculty role", "Faculty name (optional)", "Faculty LinkedIn
+  (optional)", added by setup at the end without moving data (setup stops with a clear message if
+  a different heading is in the way). The class page shows "Taught by a practising {role}: {name}",
+  with the name linked to LinkedIn (new tab, `rel="noopener noreferrer"`), only the role when
+  there is no name, and nothing when there is no role. Only `https://www.linkedin.com/` addresses
+  are used. The named person is added to the Event structured data as the performer.
+- 6 new tests (37 in total).
+
+### Classes not showing: diagnosis and fixes
+
+- Production builds were removing every log line, including errors, so Vercel's logs could never
+  show why a form or the classes sheet failed. Errors and warnings are now kept (debug lines are still removed).
+- Every failed call to the classes script is logged with a plain reason (setting missing, password
+  mismatch, web page instead of data, no answer). Logs never contain the password, script address or Meet links.
+- The script reports rows it cannot show (row number, Class ID, reason); the website logs them.
+  New `checkClasses` function to run from the Apps Script editor.
+- More forgiving sheet reading: a start typed as text (`2026-11-06 19:00`, India time) and a topic
+  in different letter case now work; spaces or line breaks around the shared password are ignored.
+- Stricter where it matters: a class with no Meet link, or a price that is empty or not a number
+  (for example `$10`), is no longer shown, instead of being shown without a join link or as free.
+- 4 new tests (31 in total).
+
+### Phase D, stage 3: free classes, waiting list, reminders, cancel links (registration still switched OFF)
+
+- Master classes are free for now: the holding page and the FAQ say "Classes are free for now", and
+  a class with price 0 shows "Free". Free classes need no Razorpay settings; the payment code stays
+  in place, unused. Refund and Shipping policy pages are not needed while classes are free.
+- Waiting list: a full class shows "Full (waiting list open)" and a "Join the waiting list" form.
+  When someone cancels, the first person waiting gets the place and the join link by email.
+- Every class email has a cancel link to `/student-portal/cancel`, which shows the class and
+  cancels only when the button is pressed. The confirmation email has one line about cancelling.
+- Reminder emails 24 hours and 1 hour before each class, each sent once, from a 15-minute timer
+  in the classes script. The owner is emailed if the daily email allowance runs short.
+- "Seats left" and the class list refresh from the sheet every 10 seconds (was 60).
+- The script needs a new `SITE_URL` property and `setup` run again; see `CLASSES-SETUP.md`.
+- 8 new tests (27 in total, `npm run test:scripts`).
+
+### Phase D, stage 2: payment with Razorpay (registration still switched OFF)
+
+- Paid classes: the seat is held for 30 minutes as "awaiting payment", the visitor pays on a
+  Razorpay Payment Link (USD, exact class price), and the registration becomes "paid" with the
+  payment ID. The confirmation email (Meet link, payment, refund rule) is sent only after payment.
+- Payments are recorded only after Razorpay's signature is verified: on the payment
+  notification (`/api/classes/razorpay-webhook`, HMAC-SHA256 of the raw body) and on the visitor's
+  return (`/student-portal/payment-complete`, signed fields, amount re-checked with Razorpay).
+  Repeated notices are harmless (keyed on the payment ID). Duplicate payments, wrong amounts and
+  late payments for a full class are flagged to the owner by email instead of confirmed.
+- The old disabled `/api/contact/razorpay-webhook` is deleted.
+- Setup steps, including test mode and checking USD, in `integrations/google-apps-script/CLASSES-SETUP.md`.
+- 9 new payment tests (19 in total, `npm run test:scripts`).
+
+### Phase D, stage 1: master classes portal (registration switched OFF)
+
+- New classes sheet script (`integrations/google-apps-script/classes.gs`): public class list (never Meet links or personal data), registration with a lock, one per email per class, seat limit, confirmation email with Meet link and calendar file. 10 automated tests (`npm run test:scripts`).
+- `/student-portal` shows the unchanged holding page until `CLASS_REGISTRATION_OPEN` is `true`; then the class list, class pages with Event data, and the registration form. Paid classes cannot be booked until payment (stage 2).
+- Class registration has its own rate limit (20 per 10 minutes per network).
+- Removed the old global loading spinner so missing pages return a real 404.
+
 ### Resources go live
 
 - First article, "Salesforce vs HubSpot vs Zoho: how to choose the right CRM", at
@@ -177,3 +262,4 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 **Housekeeping**
 - `docs/revamp/` and `.claude/` are kept out of the public repository.
 - Added `.env.example` listing setting names (no values).
+
