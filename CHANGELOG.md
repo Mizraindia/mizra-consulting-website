@@ -4,6 +4,15 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Legal pages approved
+
+- The owner's lawyer approved the privacy policy, the terms and the class registration consent
+  text with no wording changes. The "Draft: lawyer review needed" notice is removed from both
+  legal pages, they are now indexable, and they are listed in the sitemap. Footer and form links
+  are unchanged.
+- The consent version stored with each registration is now `v1` (was `v1-draft`); the wording
+  shown and stored is unchanged.
+
 ### Release preparation: wording, LinkedIn addresses, switched-off pages
 
 - Master classes holding page and "How it works": "a practising product owner" is now

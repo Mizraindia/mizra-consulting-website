@@ -2,13 +2,11 @@ import LegalPage from '@/components/LegalPage';
 import { pageMetadata } from '@/lib/metadata';
 import { ADDRESS_ONE_LINE, COMPANY } from '@/lib/site';
 
-// DRAFT written from the owner's workbook answers (10-Privacy-and-Terms).
-// Kept out of search results (noindex) until a lawyer has reviewed it.
+// Approved by the owner's lawyer (October 2026). Change the wording only with new approval.
 export const metadata = pageMetadata({
   path: '/privacy',
   title: 'Privacy Policy',
   description: 'How Mizra Consulting collects, uses and protects your personal data.',
-  noindex: true,
 });
 
 export default function PrivacyPage() {

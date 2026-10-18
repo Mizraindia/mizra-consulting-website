@@ -1,8 +1,8 @@
-// Draft consent wording for class registration (version 1). A lawyer must approve it
-// before registration opens. It is shown on the form and stored with every registration.
+// Consent wording for class registration, version 1, approved by the owner's lawyer
+// (October 2026). It is shown on the form and stored with every registration.
 // If the wording changes, bump CONSENT_VERSION so each record shows which version was agreed.
 
-export const CONSENT_VERSION = 'v1-draft';
+export const CONSENT_VERSION = 'v1';
 
 export const CONSENT_PARTS = {
   before:

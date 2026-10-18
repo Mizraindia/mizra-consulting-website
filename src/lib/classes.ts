@@ -42,7 +42,7 @@ export function safeLinkedIn(value: unknown): string {
   }
 }
 
-/** The owner's switch. Registration stays off until the lawyer approves the consent wording. */
+/** The owner's switch for the master classes portal and registration. */
 export function isRegistrationOpen(): boolean {
   return process.env.CLASS_REGISTRATION_OPEN === 'true';
 }

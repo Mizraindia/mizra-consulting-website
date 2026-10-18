@@ -3,9 +3,7 @@ import { SITE_URL } from '@/lib/site';
 import { getAllPosts } from '@/lib/blog';
 import { getClasses, isRegistrationOpen } from '@/lib/classes';
 
-// Only real, finished pages. /privacy and /terms are left out until a lawyer has
-// reviewed them (they are also marked noindex until then). Articles are added
-// automatically from src/content/blog.
+// Only real, finished pages. Articles are added automatically from src/content/blog.
 const routes = [
   '',
   '/services',
@@ -17,6 +15,8 @@ const routes = [
   '/contact',
   '/student-portal',
   '/blog',
+  '/privacy',
+  '/terms',
 ];
 
 export const revalidate = 3600;
@@ -27,8 +27,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages: MetadataRoute.Sitemap = routes.map((route) => ({
     url: `${SITE_URL}${route || '/'}`,
     lastModified: now,
-    changeFrequency: route === '' || route === '/blog' ? 'weekly' : 'monthly',
-    priority: route === '' ? 1 : 0.7,
+    changeFrequency: route === '' || route === '/blog' ? 'weekly' : route === '/privacy' || route === '/terms' ? 'yearly' : 'monthly',
+    priority: route === '' ? 1 : route === '/privacy' || route === '/terms' ? 0.3 : 0.7,
   }));
 
   const articles: MetadataRoute.Sitemap = getAllPosts().map((post) => ({

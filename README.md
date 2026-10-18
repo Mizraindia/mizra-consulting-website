@@ -94,7 +94,7 @@ on `/blog`, on the homepage (latest three), and in the sitemap automatically. A
 `## Questions people ask` section becomes FAQ data for search engines, and a final
 `## Still not sure?` section becomes the closing box that links to the enquiry form.
 Check the wording for prices, placeholders and banned words before publishing.
-| `/privacy`, `/terms` | Drafts awaiting lawyer review; kept out of search results and the sitemap |
+| `/privacy`, `/terms` | Approved by the owner's lawyer (October 2026); indexable and in the sitemap. Change the wording only with new approval |
 
 Redirects (permanent): `/home` to `/`, `/industries` to `/services`, `/faq` to `/contact`.
 Every page sets its own canonical address and sharing tags through `src/lib/metadata.ts`.
