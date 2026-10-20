@@ -50,7 +50,7 @@ One row per class. Never put a sample or test class in the LIVE sheet.
 | --- | --- |
 | Class ID | Short, lowercase letters, numbers and hyphens, for example `pm-basics-nov-21`. It becomes the web address. Do not change it once the class is open. |
 | Title | The class name |
-| Topic | Pick from the list: Product management, Product ownership, HR |
+| Topic | Pick from the dropdown: Product, Salesforce and CRM, Zoho, Careers, Agile and software delivery, Small business and automation, AI tools for work. Older rows that say "Product management" or "Product ownership" still work and are shown as Product (pick Product from the list to clear the red corner). A row with "HR" or any other topic is hidden, and **checkClasses** says why. The website shows a filter chip only for topics with at least one open class. |
 | Start (India time) | Date and time in India time, for example `2026-11-21 19:00` |
 | Duration (minutes) | For example `90` |
 | Seats | For example `100` |
@@ -61,6 +61,7 @@ One row per class. Never put a sample or test class in the LIVE sheet.
 | Faculty role | For example `Product Owner`, `Product Manager` or `HR Business Partner`. The class page says "Taught by a practising Product Owner". Leave empty for no "Taught by" line. |
 | Faculty name (optional) | For example `Asha Rao`. Shown after the role: "Taught by a practising Product Owner: Asha Rao". |
 | Faculty LinkedIn (optional) | The profile address, for example `https://www.linkedin.com/in/asha-rao`. Copied forms are tidied for you: spaces and line breaks are removed, `https://` is added if missing, and `linkedin.com`, `in.linkedin.com` and similar become `www.linkedin.com`. Any other site is ignored. The name becomes a link to it (new tab). Used only when a name is given. **checkClasses** and Vercel's logs say for each class whether the address is used or ignored, and why. |
+| Who it's for (optional) | One line, for example `Students and early-career professionals`. Shown as "Who it's for: ..." on the class page and in the class list. Leave empty to show nothing. |
 
 A class appears on the website only when every column except Description is filled, the status is
 `open` and the start time is in the future. Changes, including the "seats left" number, show on the

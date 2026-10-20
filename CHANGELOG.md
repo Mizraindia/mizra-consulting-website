@@ -4,6 +4,24 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### New master class topics and "Who it's for"
+
+- Topics are now exactly: Product, Salesforce and CRM, Zoho, Careers, Agile and software delivery,
+  Small business and automation, AI tools for work. The script checks them ignoring letter case;
+  "Product management" and "Product ownership" are read as Product; "HR" and any other topic are
+  hidden and reported in checkClasses and the logs. setup puts a dropdown of the seven topics on the
+  Topic column without changing existing cells.
+- The class list shows a topic filter chip only for topics with at least one open class (and no
+  filter when every class has the same topic).
+- New optional Classes column "Who it's for (optional)", added by setup at the end. Shown as a
+  "Who it's for:" line on the class page and in the class list, and as the Event audience.
+- Class page title and description no longer lower-case the topic; the Event data names the topic.
+- Wording: the holding page, the portal heading and descriptions, and the homepage master classes
+  section now say "product, CRM, careers and the tools of modern work". Homepage chips: Product,
+  Salesforce and CRM, Careers, AI tools for work. The holding page interest form lists the seven
+  topics plus "Something else".
+- 3 new tests (42 in total).
+
 ### Legal pages approved
 
 - The owner's lawyer approved the privacy policy, the terms and the class registration consent

@@ -15,11 +15,13 @@ const DAY = 24 * 60 * 60 * 1000;
 
 function makeSheet(name) {
   const rows = [];
+  const validations = {};
   let maxColumns = 26;
   const cell = (r, c) => (rows[r - 1] || [])[c - 1];
   return {
     name,
     rows,
+    validations,
     getMaxColumns: () => maxColumns,
     insertColumnsAfter(after, n) { maxColumns += n; },
     getLastRow: () => rows.length,
@@ -27,7 +29,7 @@ function makeSheet(name) {
     setFrozenRows() {},
     getRange(a, b, c, d) {
       if (typeof a === 'string') {
-        return { setDataValidation() { return this; }, setNumberFormat() { return this; } };
+        return { setDataValidation(rule) { validations[a] = rule; return this; }, setNumberFormat() { return this; } };
       }
       const [row, col, numRows = 1, numCols = 1] = [a, b, c, d];
       return {
@@ -89,7 +91,7 @@ function load({ lockFree = true, quota = 1000, secretProperty = SECRET } = {}) {
     SpreadsheetApp: {
       getActiveSpreadsheet: () => book,
       flush() {},
-      newDataValidation: () => ({ requireValueInList() { return this; }, setAllowInvalid() { return this; }, build() { return {}; } }),
+      newDataValidation: () => ({ requireValueInList(values, dropdown) { this.values = values; this.dropdown = dropdown; return this; }, setAllowInvalid(v) { this.allowInvalid = v; return this; }, build() { return { values: this.values, dropdown: this.dropdown, allowInvalid: this.allowInvalid }; } }),
     },
     LockService: {
       getScriptLock: () => ({ tryLock: () => lockFree, releaseLock() {} }),
@@ -134,12 +136,12 @@ function load({ lockFree = true, quota = 1000, secretProperty = SECRET } = {}) {
 
 function addClass(env, overrides = {}) {
   const c = {
-    id: 'pm-basics', title: 'Product management basics', topic: 'Product management',
+    id: 'pm-basics', title: 'Product management basics', topic: 'Product',
     start: new Date(Date.now() + 7 * DAY), duration: 90, seats: 2, price: 0,
     meet: 'https://meet.google.com/abc-defg-hij', status: 'open', description: '', ...overrides,
   };
   env.sheets.Classes.appendRow([c.id, c.title, c.topic, c.start, c.duration, c.seats, c.price, c.meet, c.status, c.description,
-    c.facultyRole ?? '', c.facultyName ?? '', c.facultyLinkedIn ?? '']);
+    c.facultyRole ?? '', c.facultyName ?? '', c.facultyLinkedIn ?? '', c.audience ?? '']);
   return c;
 }
 
@@ -174,7 +176,7 @@ test('public list shows only open, upcoming, complete classes and never the Meet
   assert.ok(!json.includes('meet.google.com'), 'Meet link must never appear');
   assert.ok(!json.includes('asha'), 'personal data must never appear');
   assert.deepEqual(Object.keys(list.classes[0]).sort(),
-    ['description', 'durationMinutes', 'facultyLinkedIn', 'facultyName', 'facultyRole', 'id', 'priceUsd', 'seats', 'seatsLeft', 'startUtc', 'title', 'topic']);
+    ['audience', 'description', 'durationMinutes', 'facultyLinkedIn', 'facultyName', 'facultyRole', 'id', 'priceUsd', 'seats', 'seatsLeft', 'startUtc', 'title', 'topic']);
   assert.equal(list.classes[0].seatsLeft, 1);
 });
 
@@ -188,7 +190,7 @@ test('the owner\'s sample row is listed, also when the start was typed as text o
   assert.deepEqual(list.classes.map((c) => c.id), ['product-101', 'text-date']);
   // 19:00 India time is 13:30 UTC.
   assert.equal(list.classes[1].startUtc, '2030-11-06T13:30:00.000Z');
-  assert.equal(list.classes[1].topic, 'Product management');
+  assert.equal(list.classes[1].topic, 'Product');
   assert.equal(list.classes[0].priceUsd, 0);
   assert.deepEqual(list.problems, []);
 });
@@ -277,10 +279,10 @@ test('setup adds the faculty columns to an existing Classes tab without moving o
   const tab = env.sheets.Classes;
   // An older Classes tab: 10 headers, one class, and only 10 columns in the sheet.
   tab.rows[0] = tab.rows[0].slice(0, 10);
-  const old = ['pm-old', 'Old class', 'HR', new Date(Date.now() + DAY), 60, 5, 0, 'https://meet.google.com/x', 'open', 'desc'];
+  const old = ['pm-old', 'Old class', 'Zoho', new Date(Date.now() + DAY), 60, 5, 0, 'https://meet.google.com/x', 'open', 'desc'];
   tab.appendRow(old);
   env.context.setup();
-  assert.deepEqual(tab.rows[0].slice(10), ['Faculty role', 'Faculty name (optional)', 'Faculty LinkedIn (optional)']);
+  assert.deepEqual(tab.rows[0].slice(10), ['Faculty role', 'Faculty name (optional)', 'Faculty LinkedIn (optional)', "Who it's for (optional)"]);
   assert.deepEqual(tab.rows[1], old);
   assert.equal(env.call({ secret: SECRET, action: 'list' }).classes[0].id, 'pm-old');
 
@@ -288,6 +290,57 @@ test('setup adds the faculty columns to an existing Classes tab without moving o
   tab.rows[0][11] = 'My notes';
   assert.throws(() => env.context.setup(), /column L is headed "My notes"/);
   assert.equal(tab.rows[0][11], 'My notes');
+});
+
+const SEVEN_TOPICS = ['Product', 'Salesforce and CRM', 'Zoho', 'Careers', 'Agile and software delivery',
+  'Small business and automation', 'AI tools for work'];
+
+test('topics: the seven topics in any letter case, old product names read as Product, HR and unknown topics hidden and reported', () => {
+  const env = load();
+  SEVEN_TOPICS.forEach((topic, i) => addClass(env, { id: `t-${i}`, topic: i % 2 ? topic.toUpperCase() : ` ${topic.toLowerCase()} ` }));
+  addClass(env, { id: 'old-pm', topic: 'Product management' });
+  addClass(env, { id: 'old-po', topic: 'product OWNERSHIP' });
+  addClass(env, { id: 'old-hr', topic: 'HR' });
+  addClass(env, { id: 'typo', topic: 'Salesforce & CRM' });
+  addClass(env, { id: 'no-topic', topic: '' });
+  const list = env.call({ secret: SECRET, action: 'list' });
+  const byId = Object.fromEntries(list.classes.map((c) => [c.id, c.topic]));
+  SEVEN_TOPICS.forEach((topic, i) => assert.equal(byId[`t-${i}`], topic));
+  assert.equal(byId['old-pm'], 'Product');
+  assert.equal(byId['old-po'], 'Product');
+  assert.ok(!('old-hr' in byId) && !('typo' in byId) && !('no-topic' in byId));
+  const problems = Object.fromEntries(list.problems.map((p) => [p.classId, p.reason]));
+  assert.match(problems['old-hr'], /^Topic "HR" is not one of the topics; pick one from the list: Product, Salesforce and CRM, Zoho/);
+  assert.match(problems.typo, /^Topic "Salesforce & CRM" is not one of the topics/);
+  assert.match(problems['no-topic'], /^Topic is empty/);
+  assert.ok(env.logs.some((l) => l.includes('row 11 (old-hr): Topic "HR" is not one of the topics')), 'in the Apps Script log');
+  env.context.checkClasses();
+  const log = env.logs.join('\n');
+  assert.match(log, /Row 9 \(old-pm\): SHOWN.*Topic "Product management" is read as "Product"/);
+  assert.match(log, /Row 11 \(old-hr\): hidden: Topic "HR" is not one of the topics/);
+  // Old names can still be booked (read as Product); HR cannot.
+  assert.equal(env.call(person({ classId: 'old-pm' })).status, 'registered');
+  assert.equal(env.call(person({ classId: 'old-hr', email: 'b@example.com' })).error, 'closed');
+});
+
+test('setup puts a dropdown of exactly the seven topics on the Topic column, and leaves existing cells alone', () => {
+  const env = load();
+  addClass(env, { id: 'old-pm', topic: 'Product management' });
+  env.context.setup();
+  const rule = env.sheets.Classes.validations['C2:C'];
+  assert.deepEqual([...rule.values], SEVEN_TOPICS);
+  assert.equal(rule.dropdown, true);
+  assert.equal(rule.allowInvalid, false);
+  assert.equal(env.sheets.Classes.rows[1][2], 'Product management', 'existing value unchanged');
+});
+
+test('"Who it\'s for" is optional and passed to the website as one line', () => {
+  const env = load();
+  addClass(env, { id: 'with', audience: 'Students and\nearly-career   professionals' });
+  addClass(env, { id: 'without' });
+  const byId = Object.fromEntries(env.call({ secret: SECRET, action: 'list' }).classes.map((c) => [c.id, c]));
+  assert.equal(byId.with.audience, 'Students and early-career professionals');
+  assert.equal(byId.without.audience, '');
 });
 
 test('rows that cannot be shown are reported with row number and reason, never the Meet link', () => {

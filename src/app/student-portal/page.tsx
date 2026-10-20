@@ -14,15 +14,15 @@ export function generateMetadata() {
   return isRegistrationOpen()
     ? pageMetadata({
         path: '/student-portal',
-        title: 'Live Master Classes in Product Management, Product Ownership and HR',
+        title: 'Live Online Master Classes: Product, CRM, Careers and More',
         description:
-          'Live online master classes in product management, product ownership and HR. Register with your name, email and WhatsApp number. Times shown in your time zone.',
+          'Live online master classes on product, CRM, careers and the tools of modern work. Register with your name, email and WhatsApp number. Times shown in your time zone.',
       })
     : pageMetadata({
         path: '/student-portal',
         title: 'Master Classes Are Coming',
         description:
-          'Live online master classes from Mizra Consulting in product management, product ownership, HR and more. Free for now. Leave your email to hear when registration opens.',
+          'Live online master classes from Mizra Consulting on product, CRM, careers and the tools of modern work. Free for now. Leave your email to hear when registration opens.',
       });
 }
 
@@ -60,7 +60,7 @@ export default async function StudentPortalPage() {
             Master classes
           </p>
           <h1 className="font-display mb-5 max-w-[820px] text-[34px] font-semibold leading-[1.12] tracking-[-0.02em] sm:text-[46px]">
-            Live master classes in product management, product ownership and HR.
+            Live master classes on product, CRM, careers and the tools of modern work.
           </h1>
           <p className="max-w-[640px] text-[19px] text-mz-body sm:text-[20px]">
             Pick a class, register with your name, email and WhatsApp number, and get your join link and a

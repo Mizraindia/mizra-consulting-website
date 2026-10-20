@@ -25,10 +25,10 @@ export async function generateMetadata({ params }: Params) {
   if (!cls) return {};
   return pageMetadata({
     path: `/student-portal/${cls.id}`,
-    title: `${cls.title}: live ${cls.topic.toLowerCase()} master class`,
+    title: `${cls.title}: live master class (${cls.topic})`,
     description:
       cls.description ||
-      `A live online ${cls.topic.toLowerCase()} master class from Mizra Consulting. ${cls.durationMinutes} minutes. Register with your name, email and WhatsApp number.`,
+      `A live online master class from Mizra Consulting. Topic: ${cls.topic}. ${cls.durationMinutes} minutes. Register with your name, email and WhatsApp number.`,
   });
 }
 
@@ -51,7 +51,9 @@ export default async function ClassPage({ params }: Params) {
     '@context': 'https://schema.org',
     '@type': 'Event',
     name: cls.title,
-    description: cls.description || `A live online ${cls.topic.toLowerCase()} master class.`,
+    description: cls.description || `A live online master class. Topic: ${cls.topic}.`,
+    about: { '@type': 'Thing', name: cls.topic },
+    ...(cls.audience ? { audience: { '@type': 'Audience', audienceType: cls.audience } } : {}),
     startDate: cls.startUtc,
     endDate: end,
     eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
@@ -119,6 +121,12 @@ export default async function ClassPage({ params }: Params) {
                 <dt className="inline font-semibold text-mz-ink">Price: </dt>
                 <dd className="inline">{cls.priceUsd > 0 ? `$${cls.priceUsd} per student` : 'Free'}</dd>
               </div>
+              {cls.audience && (
+                <div>
+                  <dt className="inline font-semibold text-mz-ink">Who it&apos;s for: </dt>
+                  <dd className="inline">{cls.audience}</dd>
+                </div>
+              )}
             </dl>
             {cls.description && <p className="mb-6 max-w-[640px] whitespace-pre-line text-mz-body">{cls.description}</p>}
             {faculty && (

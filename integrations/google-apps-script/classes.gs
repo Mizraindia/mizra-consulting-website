@@ -24,7 +24,7 @@ var REGISTRATIONS_SHEET = 'Registrations';
 var CLASS_HEADERS = [
   'Class ID',             // A  short, letters/numbers/hyphens, used in the web address; never change once open
   'Title',                // B
-  'Topic',                // C  Product management | Product ownership | HR
+  'Topic',                // C  one of TOPICS (dropdown added by setup)
   'Start (India time)',   // D  date and time
   'Duration (minutes)',   // E
   'Seats',                // F
@@ -35,6 +35,7 @@ var CLASS_HEADERS = [
   'Faculty role',         // K  e.g. Product Owner; empty = no "Taught by" line
   'Faculty name (optional)', // L
   'Faculty LinkedIn (optional)', // M  only https://www.linkedin.com/ addresses are used
+  "Who it's for (optional)", // N  e.g. "Students and early-career professionals"
 ];
 
 var REGISTRATION_HEADERS = [
@@ -58,7 +59,19 @@ var REGISTRATION_HEADERS = [
   'Reminder 1h',          // R  sent
 ];
 
-var TOPICS = ['Product management', 'Product ownership', 'HR'];
+// The class topics, in the order the website shows them. Keep in step with
+// src/lib/class-topics.ts (CLASS_TOPICS) on the website.
+var TOPICS = [
+  'Product',
+  'Salesforce and CRM',
+  'Zoho',
+  'Careers',
+  'Agile and software delivery',
+  'Small business and automation',
+  'AI tools for work',
+];
+// Older topic names still found in existing rows, read as their new topic (lowercase keys).
+var OLD_TOPICS = { 'product management': 'Product', 'product ownership': 'Product' };
 // Statuses that always hold a seat. "awaiting payment" holds one only for HOLD_MINUTES.
 var HOLDS_SEAT = ['registered', 'paid'];
 var AWAITING = 'awaiting payment';
@@ -78,6 +91,8 @@ function setup() {
   var rule = function (values) {
     return SpreadsheetApp.newDataValidation().requireValueInList(values, true).setAllowInvalid(false).build();
   };
+  // Topic dropdown. Only new typing is checked: existing cells are never changed. A cell that
+  // still holds an older topic shows a small red corner until a topic is picked from the list.
   classes.getRange('C2:C').setDataValidation(rule(TOPICS));
   classes.getRange('I2:I').setDataValidation(rule(['open', 'closed']));
   classes.getRange('D2:D').setNumberFormat('yyyy-mm-dd hh:mm');
@@ -167,6 +182,7 @@ function readClasses_() {
         id: String(row[0]).trim(),
         title: String(row[1]).trim(),
         topic: canonicalTopic_(row[2]),
+        topicTyped: oneLine_(row[2], 60),
         start: startDate_(row[3]),
         duration: Number(row[4]),
         seats: Number(row[5]),
@@ -178,6 +194,7 @@ function readClasses_() {
         facultyRole: oneLine_(row[10], 60),
         facultyName: oneLine_(row[11], 80),
         linkedIn: linkedIn_(row[12]),
+        audience: oneLine_(row[13], 160),
       };
     })
     .filter(function (c) { return c.id !== ''; });
@@ -248,11 +265,14 @@ function facultyNote_(c) {
   return 'faculty LinkedIn ' + c.linkedIn.status;
 }
 
-/** The topic exactly as listed in TOPICS, ignoring case and extra spaces; '' if it is not one. */
+/**
+ * The topic exactly as listed in TOPICS, ignoring case and extra spaces. Older names
+ * ("Product management", "Product ownership") are read as Product. '' if it is not a topic.
+ */
 function canonicalTopic_(value) {
   var wanted = String(value).replace(/\s+/g, ' ').trim().toLowerCase();
   for (var i = 0; i < TOPICS.length; i++) if (TOPICS[i].toLowerCase() === wanted) return TOPICS[i];
-  return '';
+  return OLD_TOPICS.hasOwnProperty(wanted) ? OLD_TOPICS[wanted] : '';
 }
 
 /**
@@ -316,7 +336,10 @@ function classProblem_(c) {
   if (c.start.getTime() <= Date.now()) return 'past';
   if (!/^[a-z0-9-]{3,60}$/.test(c.id)) return 'Class ID must be 3 to 60 lowercase letters, numbers or hyphens';
   if (c.title === '') return 'Title is empty';
-  if (c.topic === '') return 'Topic must be one of: ' + TOPICS.join(', ');
+  if (c.topic === '') {
+    return (c.topicTyped ? 'Topic "' + c.topicTyped + '" is not one of the topics' : 'Topic is empty') +
+      '; pick one from the list: ' + TOPICS.join(', ');
+  }
   if (!(c.duration > 0)) return 'Duration must be a number of minutes';
   if (!(c.seats > 0)) return 'Seats must be a number above 0';
   if (!(c.price >= 0)) return 'Price must be a number (0 for free)';
@@ -373,6 +396,7 @@ function classList_() {
         facultyRole: c.facultyRole,
         facultyName: c.facultyRole ? c.facultyName : '',
         facultyLinkedIn: c.facultyRole && c.facultyName ? c.linkedIn.url : '',
+        audience: c.audience,
       };
     });
   // For every shown class with a faculty name: whether the LinkedIn address is used, and why not.
@@ -394,6 +418,8 @@ function checkClasses() {
        reason === 'closed' ? 'hidden: Status is not "open"' :
        reason === 'past' ? 'hidden: the start time has passed (' + c.start.toISOString() + ' UTC)' :
        'hidden: ' + reason) +
+      (c.topic && c.topicTyped.toLowerCase() !== c.topic.toLowerCase()
+        ? '; Topic "' + c.topicTyped + '" is read as "' + c.topic + '" (pick it from the list to remove the red corner)' : '') +
       (facultyNote_(c) ? '; ' + facultyNote_(c) : ''));
   });
   var list = classList_();
