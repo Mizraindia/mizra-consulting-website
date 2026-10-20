@@ -3,7 +3,7 @@
 // filtering bots, and saving it to the owner's Google Sheet (which also sends
 // the emails). Configuration comes from environment variables set in Vercel.
 
-import { CLASS_TOPICS } from './class-topics';
+import { INTEREST_TOPICS } from './class-topics';
 
 export type LeadKind = 'enquiry' | 'class-interest';
 
@@ -52,7 +52,7 @@ export function checkSubmission(body: unknown): CheckResult {
   const email = text(data.email, 254).toLowerCase();
   const message = text(data.message, 2000);
   const topics = Array.isArray(data.topics)
-    ? data.topics.filter((t): t is string => (CLASS_TOPICS as readonly string[]).includes(t as string))
+    ? data.topics.filter((t): t is string => (INTEREST_TOPICS as readonly string[]).includes(t as string))
     : [];
   const fields: FieldErrors = {};
 

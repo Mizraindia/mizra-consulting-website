@@ -13,7 +13,7 @@ export default function MasterClassesComing() {
           Master classes are coming
         </h1>
         <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-          Live online classes in product management, product ownership, HR and more, taught by
+          Live online classes on product, CRM, careers and the tools of modern work, taught by
           practising professionals. Classes are free for now. Leave your email and we&apos;ll tell you as
           soon as dates are open for registration.
         </p>

@@ -126,7 +126,8 @@ export const HOW_WE_WORK = [
   },
 ];
 
-export const CLASS_TOPICS_SHOWN = ['Product management', 'Product ownership', 'HR'];
+// A few example topics for the homepage chips (the full list is in lib/class-topics).
+export const CLASS_TOPICS_SHOWN = ['Product', 'Salesforce and CRM', 'Careers', 'AI tools for work'];
 
 export const FAQ = [
   {

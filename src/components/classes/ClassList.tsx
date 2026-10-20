@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import LocalTime from './LocalTime';
+import { CLASS_TOPICS } from '@/lib/class-topics';
 import type { PublicClass } from '@/lib/classes';
-
-const TOPICS = ['All', 'Product management', 'Product ownership', 'HR'];
 
 function priceLabel(price: number) {
   return price > 0 ? `$${price}` : 'Free';
@@ -14,28 +13,35 @@ function priceLabel(price: number) {
 /** Upcoming classes with topic filter chips. Each card opens the class page to register. */
 export default function ClassList({ classes }: { classes: PublicClass[] }) {
   const [topic, setTopic] = useState('All');
+  // A chip only for topics that have at least one open class, in the usual topic order.
+  const chips = ['All', ...CLASS_TOPICS.filter((t) => classes.some((c) => c.topic === t))];
   const shown = classes.filter((c) => topic === 'All' || c.topic === topic);
 
   return (
     <>
-      <p id="filter-label" className="mb-3 font-sans text-sm font-semibold tracking-[0.06em]">
-        Filter by topic
-      </p>
-      <div role="group" aria-labelledby="filter-label" className="mb-8 flex flex-wrap gap-2.5">
-        {TOPICS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            aria-pressed={t === topic}
-            onClick={() => setTopic(t)}
-            className={`min-h-[44px] rounded-full border px-5 text-[15px] font-semibold ${
-              t === topic ? 'border-mz-ink bg-mz-ink text-mz-cream' : 'border-mz-field bg-white text-mz-ink hover:border-mz-ink'
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      {/* With classes in only one topic there is nothing to filter. */}
+      {chips.length > 2 && (
+        <>
+          <p id="filter-label" className="mb-3 font-sans text-sm font-semibold tracking-[0.06em]">
+            Filter by topic
+          </p>
+          <div role="group" aria-labelledby="filter-label" className="mb-8 flex flex-wrap gap-2.5">
+            {chips.map((t) => (
+              <button
+                key={t}
+                type="button"
+                aria-pressed={t === topic}
+                onClick={() => setTopic(t)}
+                className={`min-h-[44px] rounded-full border px-5 text-[15px] font-semibold ${
+                  t === topic ? 'border-mz-ink bg-mz-ink text-mz-cream' : 'border-mz-field bg-white text-mz-ink hover:border-mz-ink'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {shown.length === 0 ? (
         <p className="rounded-[20px] border border-mz-border bg-white p-7 text-mz-body">
@@ -57,6 +63,7 @@ export default function ClassList({ classes }: { classes: PublicClass[] }) {
                   <p className="text-[15px] text-mz-body">
                     {c.seatsLeft > 0 ? `${c.seatsLeft} of ${c.seats} seats left` : 'Full · waiting list open'} · {priceLabel(c.priceUsd)}
                   </p>
+                  {c.audience && <p className="mt-1 text-[15px] text-mz-body">Who it&apos;s for: {c.audience}</p>}
                 </div>
                 <Link
                   href={`/student-portal/${c.id}`}

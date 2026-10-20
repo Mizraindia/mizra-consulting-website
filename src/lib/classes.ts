@@ -20,6 +20,8 @@ export interface PublicClass {
   facultyRole?: string;
   facultyName?: string;
   facultyLinkedIn?: string;
+  /** "Who it's for" line; empty or missing shows nothing. */
+  audience?: string;
 }
 
 /** The faculty line for a class page, or null when no role is set. */

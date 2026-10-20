@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle, Loader2 } from 'lucide-react';
-import { CLASS_TOPICS } from '@/lib/class-topics';
+import { INTEREST_TOPICS } from '@/lib/class-topics';
 import {
   FieldError,
   HoneypotField,
@@ -135,7 +135,7 @@ export default function ClassInterestForm() {
           Which topics interest you?
         </legend>
         <div className="grid sm:grid-cols-2 gap-2">
-          {CLASS_TOPICS.map((topic) => (
+          {INTEREST_TOPICS.map((topic) => (
             <label
               key={topic}
               className="flex items-center gap-3 border border-gray-300 rounded-lg px-4 py-3 cursor-pointer hover:border-primary-500"

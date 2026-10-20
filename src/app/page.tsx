@@ -219,7 +219,7 @@ export default function HomePage() {
           <p className={`${eyebrow} text-mz-accent`}>Master classes</p>
           <h2 className={`${sectionHeading} mb-4 max-w-[780px]`}>Learn from someone who does this work every day.</h2>
           <p className="mb-7 max-w-[640px] text-mz-body">
-            Live online sessions in product management, product ownership, HR and more, for students and
+            Live online sessions on product, CRM, careers and the tools of modern work, for students and
             early-career professionals. You leave with something you can use straight away: a template for
             work, a clearer way to prioritise, and answers to your own questions.
           </p>
