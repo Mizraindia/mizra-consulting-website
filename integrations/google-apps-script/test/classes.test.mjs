@@ -141,7 +141,7 @@ function addClass(env, overrides = {}) {
     meet: 'https://meet.google.com/abc-defg-hij', status: 'open', description: '', ...overrides,
   };
   env.sheets.Classes.appendRow([c.id, c.title, c.topic, c.start, c.duration, c.seats, c.price, c.meet, c.status, c.description,
-    c.facultyRole ?? '', c.facultyName ?? '', c.facultyLinkedIn ?? '', c.audience ?? '']);
+    c.facultyRole ?? '', c.facultyName ?? '', c.facultyLinkedIn ?? '', c.audience ?? '', c.payLink ?? '']);
   return c;
 }
 
@@ -176,7 +176,7 @@ test('public list shows only open, upcoming, complete classes and never the Meet
   assert.ok(!json.includes('meet.google.com'), 'Meet link must never appear');
   assert.ok(!json.includes('asha'), 'personal data must never appear');
   assert.deepEqual(Object.keys(list.classes[0]).sort(),
-    ['audience', 'description', 'durationMinutes', 'facultyLinkedIn', 'facultyName', 'facultyRole', 'id', 'priceUsd', 'seats', 'seatsLeft', 'startUtc', 'title', 'topic']);
+    ['audience', 'description', 'durationMinutes', 'facultyLinkedIn', 'facultyName', 'facultyRole', 'id', 'paymentLink', 'priceInr', 'priceUsd', 'seats', 'seatsLeft', 'startUtc', 'title', 'topic']);
   assert.equal(list.classes[0].seatsLeft, 1);
 });
 
@@ -191,7 +191,7 @@ test('the owner\'s sample row is listed, also when the start was typed as text o
   // 19:00 India time is 13:30 UTC.
   assert.equal(list.classes[1].startUtc, '2030-11-06T13:30:00.000Z');
   assert.equal(list.classes[1].topic, 'Product');
-  assert.equal(list.classes[0].priceUsd, 0);
+  assert.equal(list.classes[0].priceInr, 0);
   assert.deepEqual(list.problems, []);
 });
 
@@ -282,7 +282,7 @@ test('setup adds the faculty columns to an existing Classes tab without moving o
   const old = ['pm-old', 'Old class', 'Zoho', new Date(Date.now() + DAY), 60, 5, 0, 'https://meet.google.com/x', 'open', 'desc'];
   tab.appendRow(old);
   env.context.setup();
-  assert.deepEqual(tab.rows[0].slice(10), ['Faculty role', 'Faculty name (optional)', 'Faculty LinkedIn (optional)', "Who it's for (optional)"]);
+  assert.deepEqual(tab.rows[0].slice(10), ['Faculty role', 'Faculty name (optional)', 'Faculty LinkedIn (optional)', "Who it's for (optional)", 'Payment link (optional)']);
   assert.deepEqual(tab.rows[1], old);
   assert.equal(env.call({ secret: SECRET, action: 'list' }).classes[0].id, 'pm-old');
 
@@ -341,6 +341,74 @@ test('"Who it\'s for" is optional and passed to the website as one line', () => 
   const byId = Object.fromEntries(env.call({ secret: SECRET, action: 'list' }).classes.map((c) => [c.id, c]));
   assert.equal(byId.with.audience, 'Students and early-career professionals');
   assert.equal(byId.without.audience, '');
+});
+
+// [what the owner typed, the link used ('' = ignored), what the log says]
+const PAY_LINK_CASES = [
+  ['https://rzp.io/rzp/mizra-pm-101', 'https://rzp.io/rzp/mizra-pm-101', /^payment link used$/],
+  ['https://rzp.io/l/abc123', 'https://rzp.io/l/abc123', /^payment link used$/],
+  ['https://pages.razorpay.com/pl_ABC123/view', 'https://pages.razorpay.com/pl_ABC123/view', /^payment link used$/],
+  ['https://razorpay.com/payment-button/pl_ABC/view/?utm=x', 'https://razorpay.com/payment-button/pl_ABC/view/?utm=x', /^payment link used$/],
+  ['  HTTPS://Pages.Razorpay.com/pl_ABC123/view\n', 'https://pages.razorpay.com/pl_ABC123/view', /^payment link used$/],
+  ['http://rzp.io/l/abc123', '', /ignored: not an https:\/\/ address/],
+  ['rzp.io/l/abc123', '', /ignored: not an https:\/\/ address/],
+  ['https://rzp.io.evil.com/l/abc', '', /ignored: not a Razorpay address/],
+  ['https://evil-razorpay.com/l/abc', '', /ignored: not a Razorpay address/],
+  ['https://razorpay.com.evil.com/l/abc', '', /ignored: not a Razorpay address/],
+  ['https://example.com/pay', '', /ignored: not a Razorpay address/],
+  ['https://rzp.io@evil.com/l/abc', '', /ignored: the address hides another site/],
+  ['https://rzp.io:8443/l/abc', '', /ignored: the address hides another site/],
+  ['https://razorpay.com/', '', /ignored: it is a Razorpay home page/],
+  ['https://rzp.io/l/x"><script>', '', /ignored: contains characters/],
+  ['javascript:alert(1)', '', /ignored: not an https:\/\/ address/],
+];
+
+test('payment link: only https links on rzp.io or razorpay.com are used; the log says why', () => {
+  const env = load();
+  PAY_LINK_CASES.forEach(([typed], i) => addClass(env, { id: `pay-${i}`, price: 99, payLink: typed }));
+  addClass(env, { id: 'free-with-link', price: 0, payLink: 'https://rzp.io/l/abc123' });
+  addClass(env, { id: 'no-link', price: 0 });
+  const list = env.call({ secret: SECRET, action: 'list' });
+  const byId = Object.fromEntries(list.classes.map((c) => [c.id, c]));
+  const notes = Object.fromEntries(list.notes.map((n) => [n.classId, n.note]));
+  PAY_LINK_CASES.forEach(([typed, used, why], i) => {
+    assert.equal(byId[`pay-${i}`].paymentLink, used, `link for ${JSON.stringify(typed)}`);
+    assert.match(notes[`pay-${i}`], why, `log for ${JSON.stringify(typed)}`);
+    assert.equal(byId[`pay-${i}`].priceInr, 99);
+  });
+  // A free class never sends people to a payment page.
+  assert.equal(byId['free-with-link'].paymentLink, '');
+  assert.match(notes['free-with-link'], /ignored: Price is 0/);
+  assert.ok(!('no-link' in notes), 'nothing to say when the cell is empty');
+  assert.ok(env.logs.some((l) => l.includes('payment link ignored: not a Razorpay address')), 'in the Apps Script log');
+  env.context.checkClasses();
+  assert.match(env.logs.join('\n'), /Row 2 \(pay-0\): SHOWN[^\n]*; payment link used/);
+});
+
+test('a class with a payment link cannot be registered here; every other class works as before', () => {
+  const env = load();
+  addClass(env, { id: 'external', price: 99, payLink: 'https://rzp.io/l/abc123' });
+  addClass(env, { id: 'pm-basics', seats: 1 });
+  assert.equal(env.call(person({ classId: 'external' })).error, 'external_payment');
+  assert.equal(env.sheets.Registrations.rows.length, 1, 'nothing saved');
+  assert.equal(env.call(person()).status, 'registered');
+  assert.equal(env.call(person({ email: 'wait@example.com' })).status, 'waitlisted');
+  const list = env.call({ secret: SECRET, action: 'list' });
+  assert.ok(!JSON.stringify(list).includes('meet.google.com'), 'Meet link never in the list');
+});
+
+test('prices are rupees: setup renames the "Price (USD)" heading in place, and paid emails use the rupee sign', () => {
+  const env = load();
+  const tab = env.sheets.Classes;
+  tab.rows[0][6] = 'Price (USD)';
+  addClass(env, { id: 'keep', price: 1499 });
+  env.context.setup();
+  assert.equal(tab.rows[0][6], 'Price (INR)');
+  assert.equal(tab.rows[1][6], 1499, 'the price itself is unchanged');
+  assert.equal(env.context.rupees_(99), '₹99');
+  assert.equal(env.context.rupees_(1499), '₹1,499');
+  assert.equal(env.context.rupees_(100000), '₹1,00,000');
+  assert.equal(env.context.rupees_(12345678.5), '₹1,23,45,678.50');
 });
 
 test('rows that cannot be shown are reported with row number and reason, never the Meet link', () => {
@@ -483,7 +551,7 @@ test('when the lock is busy, asks the visitor to try again instead of overbookin
 
 const paidClass = (env, overrides = {}) => addClass(env, { id: 'paid-po', topic: 'Product ownership', price: 10, ...overrides });
 const markPaid = (env, token, overrides = {}) =>
-  env.call({ secret: SECRET, action: 'markPaid', token: token.replace(/-/g, ''), paymentId: 'pay_ABC123', amountCents: 1000, currency: 'USD', ...overrides });
+  env.call({ secret: SECRET, action: 'markPaid', token: token.replace(/-/g, ''), paymentId: 'pay_ABC123', amountCents: 1000, currency: 'INR', ...overrides });
 
 test('a paid class holds the seat while awaiting payment and sends no email yet', () => {
   const env = load();
@@ -491,7 +559,7 @@ test('a paid class holds the seat while awaiting payment and sends no email yet'
   const r = env.call(person({ classId: 'paid-po' }));
   assert.equal(r.status, 'awaiting_payment');
   assert.equal(r.amountCents, 1000);
-  assert.equal(r.currency, 'USD');
+  assert.equal(r.currency, 'INR');
   assert.equal(env.sheets.Registrations.rows[1][8], 'awaiting payment');
   assert.equal(env.sent.length, 0, 'no Meet link before payment');
   // The held seat counts, so a second person goes on the waiting list.
@@ -529,7 +597,7 @@ test('verified payment marks the row paid and emails the Meet link with the paym
   assert.equal(row[15], 'yes');
   assert.equal(env.sent.length, 1);
   assert.ok(env.sent[0].body.includes(cls.meet));
-  assert.ok(env.sent[0].body.includes('Payment received: $10 (payment ID pay_ABC123)'));
+  assert.ok(env.sent[0].body.includes('Payment received: ₹10 (payment ID pay_ABC123)'));
   assert.ok(env.sent[0].body.includes('Full refund until 24 hours before the class'));
 });
 
@@ -566,7 +634,7 @@ test('a payment with the wrong amount or currency is flagged, not confirmed', ()
   const env2 = load();
   paidClass(env2);
   const r2 = env2.call(person({ classId: 'paid-po' }));
-  assert.equal(markPaid(env2, r2.token, { currency: 'INR' }).status, 'needs_attention');
+  assert.equal(markPaid(env2, r2.token, { currency: 'USD' }).status, 'needs_attention');
 });
 
 test('payment after the window when the class has filled up is flagged for a refund', () => {

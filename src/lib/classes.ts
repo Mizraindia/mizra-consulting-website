@@ -14,8 +14,14 @@ export interface PublicClass {
   durationMinutes: number;
   seats: number;
   seatsLeft: number;
-  priceUsd: number;
+  /** Price in rupees; 0 for a free class. */
+  priceInr: number;
   description: string;
+  /**
+   * An outside Razorpay payment page (https on rzp.io or razorpay.com). When set, the class page
+   * sends people there to pay instead of showing the registration form.
+   */
+  paymentLink?: string;
   /** For example "Product Owner". Empty: no "Taught by" line. */
   facultyRole?: string;
   facultyName?: string;
@@ -44,6 +50,23 @@ export function safeLinkedIn(value: unknown): string {
   }
 }
 
+/**
+ * Only https links on rzp.io or razorpay.com, or their subdomains such as pages.razorpay.com.
+ * Anything else is ignored. Checked here as well as in the script.
+ */
+export function safePaymentLink(value: unknown): string {
+  if (typeof value !== 'string' || value.length > 300) return '';
+  try {
+    const url = new URL(value.trim());
+    const host = url.hostname;
+    const razorpay = host === 'rzp.io' || host.endsWith('.rzp.io') || host === 'razorpay.com' || host.endsWith('.razorpay.com');
+    const ok = url.protocol === 'https:' && razorpay && !url.username && !url.password && !url.port && url.pathname.length > 1;
+    return ok ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
 /** The owner's switch for the master classes portal and registration. */
 export function isRegistrationOpen(): boolean {
   return process.env.CLASS_REGISTRATION_OPEN === 'true';
@@ -58,7 +81,7 @@ export function paymentsReady(): boolean {
 }
 
 // Script answers that are part of normal use and need no log line.
-const EXPECTED_ERRORS = ['duplicate', 'full', 'closed', 'not_found', 'too_late', 'not_cancellable', 'busy', 'invalid'];
+const EXPECTED_ERRORS = ['duplicate', 'full', 'closed', 'not_found', 'too_late', 'not_cancellable', 'busy', 'invalid', 'external_payment'];
 
 const HINTS: Record<string, string> = {
   unauthorised: 'CLASSES_SCRIPT_SECRET in Vercel does not match SHARED_SECRET in the script (or SHARED_SECRET is not set)',
@@ -136,8 +159,22 @@ export async function getClasses(): Promise<PublicClass[] | null> {
     return null;
   }
   logClassProblems(reply.problems);
-  logFacultyNotes((reply as { notes?: unknown }).notes);
-  return reply.classes;
+  logClassNotes((reply as { notes?: unknown }).notes);
+  return reply.classes.map(normaliseClass);
+}
+
+/**
+ * Prices are rupees. Scripts from before 4 November 2026 send the same number as "priceUsd".
+ * A payment link is used only for a priced class and only if it passes the check here too.
+ */
+function normaliseClass(raw: PublicClass & { priceUsd?: number }): PublicClass {
+  const { priceUsd, ...cls } = raw;
+  const priceInr = Number(cls.priceInr ?? priceUsd ?? 0) || 0;
+  const paymentLink = priceInr > 0 ? safePaymentLink(cls.paymentLink) : '';
+  if (cls.paymentLink && priceInr > 0 && !paymentLink) {
+    logOnce(`Classes sheet class ${String(cls.id).slice(0, 60)}: payment link ignored by the website: not an https link on rzp.io or razorpay.com`, 'warn');
+  }
+  return { ...cls, priceInr, paymentLink };
 }
 
 /**
@@ -173,10 +210,10 @@ function logClassProblems(problems: unknown) {
 }
 
 /**
- * For each shown class with a faculty name: whether its LinkedIn address is used or ignored,
- * and why. The script never includes the name or the address in these notes.
+ * For each shown class: whether its faculty LinkedIn address and payment link are used or
+ * ignored, and why. The script never includes names or addresses in these notes.
  */
-function logFacultyNotes(notes: unknown) {
+function logClassNotes(notes: unknown) {
   if (!Array.isArray(notes)) return;
   for (const n of notes as { row: number; classId: string; note: string }[]) {
     const note = String(n.note).slice(0, 200);

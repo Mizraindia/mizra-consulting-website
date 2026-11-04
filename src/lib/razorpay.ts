@@ -64,6 +64,7 @@ export function tokenFromReference(reference: string): string {
 }
 
 export async function createPaymentLink(p: {
+  /** In paise (rupees × 100), Razorpay's smallest unit for INR. */
   amountCents: number;
   referenceId: string;
   description: string;
@@ -78,7 +79,7 @@ export async function createPaymentLink(p: {
       headers: { 'Content-Type': 'application/json', Authorization: authHeader() },
       body: JSON.stringify({
         amount: p.amountCents,
-        currency: 'USD',
+        currency: 'INR',
         accept_partial: false,
         description: p.description.slice(0, 2048),
         reference_id: p.referenceId,

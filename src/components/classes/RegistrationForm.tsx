@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { CONSENT_PARTS } from '@/lib/class-consent';
+import { formatInr } from '@/lib/money';
 import { trackEvent } from '@/lib/analytics';
 import { CONTACT_EMAIL, FieldError, HoneypotField, useBotCheck, useHydrated } from '@/components/LeadFormParts';
 
@@ -16,6 +17,7 @@ const label = 'mb-1.5 block text-sm font-semibold';
 const ERRORS: Record<string, string> = {
   duplicate: `This email is already registered for this class. Check your inbox for the confirmation, or email us at ${CONTACT_EMAIL}.`,
   full: 'Sorry, this class is now full.',
+  external_payment: 'This class is paid on Razorpay. Please reload the page and use the Pay button.',
   closed: 'Registration for this class has closed.',
   not_found: 'Registration for this class has closed.',
   payments_unavailable: 'Online payment for this class is not open yet. Please check back soon.',
@@ -28,12 +30,13 @@ const UNAVAILABLE = `Sorry, we couldn't register you just now. What you typed is
 export default function RegistrationForm({
   classId,
   classTitle,
-  priceUsd = 0,
+  priceInr = 0,
   full = false,
 }: {
   classId: string;
   classTitle: string;
-  priceUsd?: number;
+  /** In rupees; 0 for a free class. */
+  priceInr?: number;
   /** No seats left: the form joins the waiting list instead. */
   full?: boolean;
 }) {
@@ -242,8 +245,8 @@ export default function RegistrationForm({
             ? 'Registering...'
             : full
               ? 'Join the waiting list'
-              : priceUsd > 0
-                ? `Continue to payment ($${priceUsd})`
+              : priceInr > 0
+                ? `Continue to payment (${formatInr(priceInr)})`
                 : 'Register'}
       </button>
       {full && (
@@ -251,9 +254,9 @@ export default function RegistrationForm({
           This class is full. Join the waiting list and we will email you the join link if a place opens up.
         </p>
       )}
-      {priceUsd > 0 && !full && (
+      {priceInr > 0 && !full && (
         <p className="mt-3 text-[13px] text-mz-muted">
-          You pay ${priceUsd} securely on Razorpay&apos;s payment page. Your seat is held for 30 minutes while you pay.
+          You pay {formatInr(priceInr)} securely on Razorpay&apos;s payment page. Your seat is held for 30 minutes while you pay.
           Full refund until 24 hours before the class; after that, we offer a place in the next class instead.
         </p>
       )}

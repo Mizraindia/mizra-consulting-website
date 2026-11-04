@@ -1,13 +1,16 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import LocalTime from '@/components/classes/LocalTime';
+import PaymentPanel from '@/components/classes/PaymentPanel';
 import RegistrationForm from '@/components/classes/RegistrationForm';
 import StructuredData from '@/components/StructuredData';
 import { facultyOf, getClass, getClasses, isRegistrationOpen } from '@/lib/classes';
 import { pageMetadata } from '@/lib/metadata';
+import { formatInr } from '@/lib/money';
 import { SITE_URL, organizationData } from '@/lib/site';
 
-// One master class: details, Event data for search engines, and the registration form.
+// One master class: details, Event data for search engines, and the registration form (or, for
+// a class paid on an outside Razorpay page, the pay button and what happens when you pay).
 // Exists only while registration is switched on; refreshed from the sheet every 10 seconds
 // so "seats left" stays fresh. Must match CLASS_DATA_SECONDS in lib/classes.
 export const revalidate = 10;
@@ -75,9 +78,10 @@ export default async function ClassPage({ params }: Params) {
     offers: {
       '@type': 'Offer',
       url,
-      price: String(cls.priceUsd),
-      priceCurrency: 'USD',
-      availability: cls.seatsLeft > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+      price: String(cls.priceInr),
+      priceCurrency: 'INR',
+      // Seats for a class paid on Razorpay are counted there, not here.
+      availability: cls.paymentLink || cls.seatsLeft > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
     },
   };
 
@@ -115,11 +119,17 @@ export default async function ClassPage({ params }: Params) {
               </div>
               <div>
                 <dt className="inline font-semibold text-mz-ink">Seats: </dt>
-                <dd className="inline">{cls.seatsLeft > 0 ? `${cls.seatsLeft} of ${cls.seats} left` : 'Full (waiting list open)'}</dd>
+                <dd className="inline">
+                  {cls.paymentLink
+                    ? 'Seats are limited'
+                    : cls.seatsLeft > 0
+                      ? `${cls.seatsLeft} of ${cls.seats} left`
+                      : 'Full (waiting list open)'}
+                </dd>
               </div>
               <div>
                 <dt className="inline font-semibold text-mz-ink">Price: </dt>
-                <dd className="inline">{cls.priceUsd > 0 ? `$${cls.priceUsd} per student` : 'Free'}</dd>
+                <dd className="inline">{cls.priceInr > 0 ? `${formatInr(cls.priceInr)} per student` : 'Free'}</dd>
               </div>
               {cls.audience && (
                 <div>
@@ -155,12 +165,16 @@ export default async function ClassPage({ params }: Params) {
           </div>
 
           <div className="w-full min-w-0 flex-[1_1_360px] rounded-[20px] border border-mz-border bg-white p-6 sm:p-7">
-            <RegistrationForm
-              classId={cls.id}
-              classTitle={cls.title}
-              priceUsd={cls.priceUsd}
-              full={cls.seatsLeft <= 0}
-            />
+            {cls.paymentLink ? (
+              <PaymentPanel classTitle={cls.title} priceInr={cls.priceInr} paymentLink={cls.paymentLink} />
+            ) : (
+              <RegistrationForm
+                classId={cls.id}
+                classTitle={cls.title}
+                priceInr={cls.priceInr}
+                full={cls.seatsLeft <= 0}
+              />
+            )}
           </div>
         </div>
       </section>
