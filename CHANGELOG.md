@@ -4,6 +4,17 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Price wording for free and paid classes; draft refund and delivery policies
+
+- "Classes are free for now" is replaced: the FAQ now asks "Are the master classes free?" and
+  answers "Some classes are free and some have a small fee, for example ₹99. The price is shown on
+  each class page before you register."; the holding page and its search description say "Free and
+  low-cost live classes. The price is shown on each class."
+- New draft pages `/refund-and-cancellation` and `/shipping-and-delivery`, marked "Draft: lawyer
+  review needed", noindex and left out of the sitemap. Linked from the footer ("Refunds",
+  "Delivery"), the "Before you pay" section and below the registration form. Terms and Privacy
+  text unchanged.
+
 ### Razorpay payment links per class, and prices in rupees
 
 - Class prices are rupees everywhere: ₹ with Indian digit grouping (₹99, ₹1,49,999) on the class

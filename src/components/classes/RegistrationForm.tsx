@@ -264,6 +264,17 @@ export default function RegistrationForm({
         We use your WhatsApp number only for class reminders. For students under 18, everything goes to the parent
         or guardian and we keep only the student&apos;s first name.
       </p>
+      <p className="mt-3 text-[13px] text-mz-muted">
+        Read our{' '}
+        <Link href="/refund-and-cancellation" className="underline">
+          refund and cancellation policy
+        </Link>{' '}
+        and{' '}
+        <Link href="/shipping-and-delivery" className="underline">
+          how classes are delivered
+        </Link>
+        .
+      </p>
     </form>
   );
 }

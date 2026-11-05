@@ -50,7 +50,15 @@ export default function PaymentPanel({
         <Link href="/privacy" className="underline">
           Privacy policy
         </Link>
-        .
+        , and how{' '}
+        <Link href="/refund-and-cancellation" className="underline">
+          refunds and cancellations
+        </Link>{' '}
+        and{' '}
+        <Link href="/shipping-and-delivery" className="underline">
+          class delivery
+        </Link>{' '}
+        work.
       </p>
     </div>
   );

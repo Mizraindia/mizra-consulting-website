@@ -187,7 +187,7 @@ chat or email.
 
 Razorpay asks for these pages on your website: Terms and Conditions, Privacy policy, Refund and
 Cancellation policy, and Shipping (delivery) policy. Mizra's Terms and Privacy pages are approved;
-the Refund and Cancellation and the Shipping pages still need to be written and approved.
+`/refund-and-cancellation` and `/shipping-and-delivery` are drafts awaiting lawyer review.
 
 **Get the API keys (Test Mode)**
 

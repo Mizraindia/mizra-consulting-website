@@ -95,6 +95,7 @@ on `/blog`, on the homepage (latest three), and in the sitemap automatically. A
 `## Still not sure?` section becomes the closing box that links to the enquiry form.
 Check the wording for prices, placeholders and banned words before publishing.
 | `/privacy`, `/terms` | Approved by the owner's lawyer (October 2026); indexable and in the sitemap. Change the wording only with new approval |
+| `/refund-and-cancellation`, `/shipping-and-delivery` | Drafts awaiting lawyer review (November 2026); marked "Draft", noindex and left out of the sitemap until the owner says they are approved |
 
 Redirects (permanent): `/home` to `/`, `/industries` to `/services`, `/faq` to `/contact`.
 Every page sets its own canonical address and sharing tags through `src/lib/metadata.ts`.

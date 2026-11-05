@@ -14,7 +14,8 @@ export default function MasterClassesComing() {
         </h1>
         <p className="mt-6 text-lg text-gray-600 leading-relaxed">
           Live online classes on product, CRM, careers and the tools of modern work, taught by
-          practising professionals. Classes are free for now. Leave your email and we&apos;ll tell you as
+          practising professionals. Free and low-cost live classes. The price is shown on each class.
+          Leave your email and we&apos;ll tell you as
           soon as dates are open for registration.
         </p>
         <div className="mt-10">

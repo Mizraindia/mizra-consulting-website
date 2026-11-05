@@ -22,7 +22,7 @@ export function generateMetadata() {
         path: '/student-portal',
         title: 'Master Classes Are Coming',
         description:
-          'Live online master classes from Mizra Consulting on product, CRM, careers and the tools of modern work. Free for now. Leave your email to hear when registration opens.',
+          'Live online master classes from Mizra Consulting on product, CRM, careers and the tools of modern work. Free and low-cost live classes. The price is shown on each class. Leave your email to hear when registration opens.',
       });
 }
 
@@ -38,7 +38,10 @@ const FAQ = [
     q: 'Do I need an account to register?',
     a: 'No. Your name, email and WhatsApp number are enough. Students under 18 are registered by a parent or guardian, who receives all messages.',
   },
-  { q: 'How much does a class cost?', a: 'Classes are free for now.' },
+  {
+    q: 'Are the master classes free?',
+    a: 'Some classes are free and some have a small fee, for example ₹99. The price is shown on each class page before you register.',
+  },
   {
     q: 'Which time zone are the classes in?',
     a: 'Every class time is shown in your own time zone, with the UTC offset, so you always see when it starts for you.',
