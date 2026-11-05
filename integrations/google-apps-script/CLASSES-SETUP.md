@@ -54,7 +54,7 @@ One row per class. Never put a sample or test class in the LIVE sheet.
 | Start (India time) | Date and time in India time, for example `2026-11-21 19:00` |
 | Duration (minutes) | For example `90` |
 | Seats | For example `100` |
-| Price (USD) | `0` for now (classes are free; the website shows "Free") |
+| Price (INR) | The price in rupees, numbers only, for example `99` (shown as ₹99). `0` for a free class (shown as "Free"). Older sheets call this column "Price (USD)"; setup renames the heading in place and leaves the prices alone, so check they are rupee amounts. |
 | Meet link (private) | The Google Meet link, starting with `https://`. Required: a class without one is not shown. Never shown on the website; sent only by email. |
 | Status | `open` to show it on the site, `closed` to hide it |
 | Description (optional) | A short description, or leave empty |
@@ -62,6 +62,7 @@ One row per class. Never put a sample or test class in the LIVE sheet.
 | Faculty name (optional) | For example `Asha Rao`. Shown after the role: "Taught by a practising Product Owner: Asha Rao". |
 | Faculty LinkedIn (optional) | The profile address, for example `https://www.linkedin.com/in/asha-rao`. Copied forms are tidied for you: spaces and line breaks are removed, `https://` is added if missing, and `linkedin.com`, `in.linkedin.com` and similar become `www.linkedin.com`. Any other site is ignored. The name becomes a link to it (new tab). Used only when a name is given. **checkClasses** and Vercel's logs say for each class whether the address is used or ignored, and why. |
 | Who it's for (optional) | One line, for example `Students and early-career professionals`. Shown as "Who it's for: ..." on the class page and in the class list. Leave empty to show nothing. |
+| Payment link (optional) | A Razorpay payment page for this class, for example `https://rzp.io/rzp/...` or `https://pages.razorpay.com/...`. Only `https` links on rzp.io or razorpay.com are used, and only when Price is above 0. When used, the class page and class list show "Pay ₹99 and register" (opens Razorpay in a new tab), "Seats are limited" instead of a seat count, and a short "Before you pay" section; the registration form is not shown and nobody is registered in this sheet (Razorpay keeps the payment records). Leave empty for the normal registration form. **checkClasses** and Vercel's logs say whether the link is used or ignored, and why. |
 
 A class appears on the website only when every column except Description is filled, the status is
 `open` and the start time is in the future. Changes, including the "seats left" number, show on the
@@ -162,23 +163,31 @@ On the live site, `/student-portal` must still say "Master classes are coming" u
    an authorisation message (open the script, run **setup** once and approve the permissions, then
    deploy a new version).
 
-## 5. Razorpay for paid classes (not needed while classes are free)
+## 5. A paid class with your own Razorpay payment page (simplest)
 
-Classes are free for now, so skip this section; free classes need no Razorpay settings. The payment
-code stays in place, unused, for later. Paid classes cannot be booked until all three Razorpay settings exist. Use **Test Mode** keys
-for Preview and **Live Mode** keys for Production. Never paste a key secret into chat or email.
+1. In Razorpay, create a **Payment Page** or **Payment Link** for the class in rupees, with the same
+   price as the sheet. On its success screen, show the joining link (the website promises "After you
+   pay, the joining link is shown on the confirmation page").
+2. In the Classes tab fill **Price (INR)** (for example `99`) and paste the Razorpay address into
+   **Payment link (optional)**.
+3. Run **checkClasses**: the row should say "payment link used". Reload the class page after about
+   10 seconds: it shows "Pay ₹99 and register".
 
-**Check that USD payments are enabled**
+Payments, refunds and the list of who paid live in Razorpay for these classes; the Registrations
+tab, reminders, waiting list and cancel links are not used for them. Free classes and paid classes
+without a payment link work exactly as before.
 
-1. Log in to the Razorpay Dashboard. Open **Account & Settings** (or **Settings**) → **Payment methods**
-   and look for **International payments**. The status shows as active, pending or not requested.
-2. If it is not active, click **Request** (or **Enable**) and complete the form. Razorpay's partners
-   approve it; it can take from a few days to about two weeks.
-3. Razorpay asks for these pages on your website: Terms and Conditions, Privacy policy, Refund and
-   Cancellation policy, and Shipping (delivery) policy. Mizra's Terms and Privacy pages are approved; the
-   Refund and Cancellation and the Shipping pages still need to be written and approved.
-4. Final check: in Test Mode, open **Payment Links → Create Payment Link** and look for **USD** in the
-   currency list. If USD is missing, international payments are not active on the account yet.
+## 6. Razorpay inside the website for paid classes (optional; not needed with a payment link)
+
+This is the older, built-in way: the website registers the person, holds the seat for 30 minutes
+and creates a Razorpay payment for them, in rupees. Skip it if you use payment links (section 5).
+Paid classes without a payment link cannot be booked until all three Razorpay settings exist. Use
+**Test Mode** keys for Preview and **Live Mode** keys for Production. Never paste a key secret into
+chat or email.
+
+Razorpay asks for these pages on your website: Terms and Conditions, Privacy policy, Refund and
+Cancellation policy, and Shipping (delivery) policy. Mizra's Terms and Privacy pages are approved;
+`/refund-and-cancellation` and `/shipping-and-delivery` are drafts awaiting lawyer review.
 
 **Get the API keys (Test Mode)**
 
@@ -201,10 +210,10 @@ for Preview and **Live Mode** keys for Production. Never paste a key secret into
 **Test a payment**
 
 1. In the TEST sheet add a class with **Price 10**.
-2. Register on the preview. The button says "Continue to payment ($10)" and opens Razorpay's page.
+2. Register on the preview. The button says "Continue to payment (₹10)" and opens Razorpay's page.
 3. Pay with one of Razorpay's published **test cards** (see Razorpay's "Test card details" page).
 4. You return to "Payment received. You are registered.", the email arrives with the Meet link and
-   "Payment received: $10", and the Registrations row says **paid** with a `pay_...` ID.
+   "Payment received: ₹10", and the Registrations row says **paid** with a `pay_...` ID.
 5. Close the payment page without paying instead: the row stays "awaiting payment", and the seat is
    released after 30 minutes.
 

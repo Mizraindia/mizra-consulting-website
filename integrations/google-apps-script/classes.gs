@@ -28,7 +28,7 @@ var CLASS_HEADERS = [
   'Start (India time)',   // D  date and time
   'Duration (minutes)',   // E
   'Seats',                // F
-  'Price (USD)',          // G  0 for a free class
+  'Price (INR)',          // G  in rupees; 0 for a free class (was "Price (USD)"; setup renames the heading)
   'Meet link (private)',  // H  never shown on the website; sent only by email
   'Status',               // I  open | closed
   'Description (optional)', // J
@@ -36,7 +36,12 @@ var CLASS_HEADERS = [
   'Faculty name (optional)', // L
   'Faculty LinkedIn (optional)', // M  only https://www.linkedin.com/ addresses are used
   "Who it's for (optional)", // N  e.g. "Students and early-career professionals"
+  'Payment link (optional)', // O  an https link on rzp.io or razorpay.com; the class page then sends
+                             //    people there to pay instead of showing the registration form
 ];
+
+// Old headings that setup may rename in place (the column and its data stay where they are).
+var RENAMED_HEADERS = { 'Price (USD)': 'Price (INR)' };
 
 var REGISTRATION_HEADERS = [
   'Registered at (UTC)',  // A
@@ -117,7 +122,7 @@ function ensureSheet_(book, name, headers) {
   var current = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
   headers.forEach(function (header, i) {
     var found = String(current[i]).trim();
-    if (found !== '' && found !== header) {
+    if (found !== '' && found !== header && RENAMED_HEADERS[found] !== header) {
       throw new Error('Setup stopped, nothing was changed in this column: in the "' + name + '" tab, column ' +
         columnLetter_(i + 1) + ' is headed "' + found + '" but should be "' + header + '". ' +
         'Move that column to the right of the last expected column, then run setup again.');
@@ -195,9 +200,59 @@ function readClasses_() {
         facultyName: oneLine_(row[11], 80),
         linkedIn: linkedIn_(row[12]),
         audience: oneLine_(row[13], 160),
+        payLinkTyped: row[14],
       };
     })
-    .filter(function (c) { return c.id !== ''; });
+    .filter(function (c) { return c.id !== ''; })
+    .map(function (c) {
+      c.payLink = paymentLink_(c.payLinkTyped, c.price);
+      return c;
+    });
+}
+
+/**
+ * Reads the "Payment link (optional)" cell. Only https addresses on rzp.io or razorpay.com
+ * (or their subdomains, such as pages.razorpay.com) are used, and only for a class with a
+ * price above 0. Returns { url, status }; url is '' when nothing is used, and status says why.
+ */
+function paymentLink_(value, price) {
+  var raw = String(value == null ? '' : value).replace(/\s+/g, '');
+  if (raw === '') return { url: '', status: 'empty' };
+  var m = raw.match(/^https:\/\/([^\/?#]*)([\/?#].*)?$/i);
+  if (!m) return { url: '', status: 'ignored: not an https:// address' };
+  var host = m[1].toLowerCase();
+  if (host.indexOf('@') >= 0 || host.indexOf(':') >= 0) {
+    return { url: '', status: 'ignored: the address hides another site (contains @ or a port)' };
+  }
+  var razorpay = /^[a-z0-9-]+(\.[a-z0-9-]+)*$/.test(host) &&
+    (host === 'rzp.io' || /\.rzp\.io$/.test(host) || host === 'razorpay.com' || /\.razorpay\.com$/.test(host));
+  if (!razorpay) return { url: '', status: 'ignored: not a Razorpay address (only rzp.io and razorpay.com are accepted)' };
+  var rest = (m[2] || '/').replace(/#.*$/, '');
+  if (rest === '' || rest === '/') return { url: '', status: 'ignored: it is a Razorpay home page, not a payment page' };
+  if (!/^[\/?][A-Za-z0-9\-._~%\/?=&+]*$/.test(rest)) {
+    return { url: '', status: 'ignored: contains characters a payment address cannot have' };
+  }
+  var url = 'https://' + host + rest;
+  if (url.length > 300) return { url: '', status: 'ignored: longer than 300 characters' };
+  if (!(price > 0)) {
+    return { url: '', status: 'ignored: Price is 0 or empty, so the class is free and the registration form is shown' };
+  }
+  return { url: url, status: 'used' };
+}
+
+/**
+ * A rupee amount with the rupee sign and Indian digit grouping, for example ₹1,499 or ₹1,00,000.
+ * Written out by hand because Apps Script's number formatting does not always follow en-IN.
+ */
+function rupees_(amount) {
+  var n = Math.round(Number(amount) * 100) / 100;
+  var parts = String(Math.abs(n)).split('.');
+  var whole = parts[0];
+  var last3 = whole.slice(-3);
+  var rest = whole.slice(0, -3);
+  var grouped = (rest ? rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' : '') + last3;
+  var paise = parts[1] ? '.' + (parts[1] + '0').slice(0, 2) : '';
+  return (n < 0 ? '-' : '') + '₹' + grouped + paise;
 }
 
 function oneLine_(value, max) {
@@ -263,6 +318,14 @@ function facultyNote_(c) {
   if (!c.facultyRole) return 'faculty name not shown: Faculty role is empty, so there is no "Taught by" line';
   if (c.linkedIn.status === 'empty') return 'faculty name shown without a link (no LinkedIn address given)';
   return 'faculty LinkedIn ' + c.linkedIn.status;
+}
+
+/** Everything worth saying about a shown class's optional cells, for logs. */
+function classNotes_(c) {
+  var notes = [];
+  if (facultyNote_(c)) notes.push(facultyNote_(c));
+  if (c.payLink.status !== 'empty') notes.push('payment link ' + c.payLink.status);
+  return notes;
 }
 
 /**
@@ -391,7 +454,9 @@ function classList_() {
         durationMinutes: c.duration,
         seats: c.seats,
         seatsLeft: Math.max(0, c.seats - seatsTaken_(registrations, c.id)),
-        priceUsd: c.price,
+        priceInr: c.price,
+        priceUsd: c.price, // same number, for website versions from before 4 November 2026
+        paymentLink: c.payLink.url,
         description: c.description,
         facultyRole: c.facultyRole,
         facultyName: c.facultyRole ? c.facultyName : '',
@@ -399,9 +464,11 @@ function classList_() {
         audience: c.audience,
       };
     });
-  // For every shown class with a faculty name: whether the LinkedIn address is used, and why not.
-  var notes = rows.filter(isOpenUpcoming_).filter(function (c) { return facultyNote_(c) !== ''; })
-    .map(function (c) { return { row: c.rowNumber, classId: c.id, note: facultyNote_(c) }; });
+  // For every shown class: whether its faculty LinkedIn address and payment link are used, and why not.
+  var notes = [];
+  rows.filter(isOpenUpcoming_).forEach(function (c) {
+    classNotes_(c).forEach(function (note) { notes.push({ row: c.rowNumber, classId: c.id, note: note }); });
+  });
   return { classes: classes, problems: problems, notes: notes };
 }
 
@@ -420,7 +487,7 @@ function checkClasses() {
        'hidden: ' + reason) +
       (c.topic && c.topicTyped.toLowerCase() !== c.topic.toLowerCase()
         ? '; Topic "' + c.topicTyped + '" is read as "' + c.topic + '" (pick it from the list to remove the red corner)' : '') +
-      (facultyNote_(c) ? '; ' + facultyNote_(c) : ''));
+      classNotes_(c).map(function (note) { return '; ' + note; }).join(''));
   });
   var list = classList_();
   // Faculty names and LinkedIn addresses are personal data: say only whether they are set.
@@ -466,6 +533,8 @@ function register_(request) {
     cls = readClasses_().filter(function (c) { return c.id === classId; })[0];
     if (!cls) return { ok: false, error: 'not_found' };
     if (!isOpenUpcoming_(cls)) return { ok: false, error: 'closed' };
+    // Paid on an outside Razorpay payment page: nobody is registered here.
+    if (cls.payLink.url) return { ok: false, error: 'external_payment' };
 
     var registrations = readRegistrations_();
     var nowMs = Date.now();
@@ -477,7 +546,7 @@ function register_(request) {
     var held = mine.filter(function (r) { return isActiveHold_(r, nowMs); })[0];
     if (held) {
       // Came back to pay within the payment window: reuse the seat that is already held.
-      return { ok: true, status: 'awaiting_payment', token: held.token, amountCents: Math.round(cls.price * 100), currency: 'USD', title: cls.title };
+      return { ok: true, status: 'awaiting_payment', token: held.token, amountCents: Math.round(cls.price * 100), currency: 'INR', title: cls.title };
     }
     var full = seatsTaken_(registrations, cls.id) >= cls.seats;
     var paid = cls.price > 0 && !full;
@@ -497,7 +566,7 @@ function register_(request) {
     rowNumber = sheet.getLastRow();
     if (paid) {
       // No email yet: the confirmation (with the Meet link) is sent once payment is verified.
-      return { ok: true, status: 'awaiting_payment', token: token, amountCents: Math.round(cls.price * 100), currency: 'USD', title: cls.title };
+      return { ok: true, status: 'awaiting_payment', token: token, amountCents: Math.round(cls.price * 100), currency: 'INR', title: cls.title };
     }
   } finally {
     lock.releaseLock();
@@ -667,7 +736,7 @@ function markPaid_(request) {
     if (row.status === 'paid') {
       if (row.paymentId === paymentId) return { ok: true, status: 'paid', repeat: true };
       problem = 'Second payment ' + paymentId + ' for a seat already paid by ' + row.paymentId + '. Refund the second payment.';
-    } else if (!cls || amountCents !== Math.round(cls.price * 100) || currency !== 'USD') {
+    } else if (!cls || amountCents !== Math.round(cls.price * 100) || currency !== 'INR') {
       problem = 'Payment ' + paymentId + ' of ' + (amountCents / 100) + ' ' + currency + ' does not match the class price. Check before confirming.';
       setCells_(row.rowNumber, { 'Status': 'CHECK: amount', 'Payment ID': paymentId });
     } else if (row.status === AWAITING || row.status === 'expired') {
@@ -831,7 +900,7 @@ function sendConfirmation_(cls, person, fromWaitlist) {
   lines = lines.concat(whenLines_(cls, person));
   lines.push('Length: ' + cls.duration + ' minutes', 'Join link: ' + cls.meetLink);
   if (person.paymentId) {
-    lines.push('', 'Payment received: $' + cls.price + ' (payment ID ' + person.paymentId + ').', REFUND_RULE);
+    lines.push('', 'Payment received: ' + rupees_(cls.price) + ' (payment ID ' + person.paymentId + ').', REFUND_RULE);
   }
   lines.push(
     '',

@@ -3,11 +3,19 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import LocalTime from './LocalTime';
+import PayButton from './PayButton';
 import { CLASS_TOPICS } from '@/lib/class-topics';
 import type { PublicClass } from '@/lib/classes';
+import { formatInr } from '@/lib/money';
 
 function priceLabel(price: number) {
-  return price > 0 ? `$${price}` : 'Free';
+  return price > 0 ? formatInr(price) : 'Free';
+}
+
+/** Classes paid on an outside Razorpay page show no seat count. */
+function seatsLabel(c: PublicClass) {
+  if (c.paymentLink) return 'Seats are limited';
+  return c.seatsLeft > 0 ? `${c.seatsLeft} of ${c.seats} seats left` : 'Full · waiting list open';
 }
 
 /** Upcoming classes with topic filter chips. Each card opens the class page to register. */
@@ -61,17 +69,27 @@ export default function ClassList({ classes }: { classes: PublicClass[] }) {
                     <LocalTime iso={c.startUtc} /> · {c.durationMinutes} minutes
                   </p>
                   <p className="text-[15px] text-mz-body">
-                    {c.seatsLeft > 0 ? `${c.seatsLeft} of ${c.seats} seats left` : 'Full · waiting list open'} · {priceLabel(c.priceUsd)}
+                    {seatsLabel(c)} · {priceLabel(c.priceInr)}
                   </p>
                   {c.audience && <p className="mt-1 text-[15px] text-mz-body">Who it&apos;s for: {c.audience}</p>}
                 </div>
-                <Link
-                  href={`/student-portal/${c.id}`}
-                  className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-mz-accent px-6 text-[15px] font-semibold text-white hover:bg-mz-deep"
-                >
-                  {c.seatsLeft > 0 ? 'View and register' : 'Join the waiting list'}
-                  <span className="sr-only">: {c.title}</span>
-                </Link>
+                {c.paymentLink ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <PayButton href={c.paymentLink} priceInr={c.priceInr} classTitle={c.title} size="small" />
+                    <Link href={`/student-portal/${c.id}`} className="text-[15px] font-semibold text-mz-accent underline">
+                      Class details
+                      <span className="sr-only">: {c.title}</span>
+                    </Link>
+                  </div>
+                ) : (
+                  <Link
+                    href={`/student-portal/${c.id}`}
+                    className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-mz-accent px-6 text-[15px] font-semibold text-white hover:bg-mz-deep"
+                  >
+                    {c.seatsLeft > 0 ? 'View and register' : 'Join the waiting list'}
+                    <span className="sr-only">: {c.title}</span>
+                  </Link>
+                )}
               </article>
             </li>
           ))}

@@ -4,6 +4,36 @@ Plain-English record of changes to the Mizra Consulting website. Newest first.
 
 ## Unreleased (branch `revamp`)
 
+### Price wording for free and paid classes; draft refund and delivery policies
+
+- "Classes are free for now" is replaced: the FAQ now asks "Are the master classes free?" and
+  answers "Some classes are free and some have a small fee, for example ₹99. The price is shown on
+  each class page before you register."; the holding page and its search description say "Free and
+  low-cost live classes. The price is shown on each class."
+- New draft pages `/refund-and-cancellation` and `/shipping-and-delivery`, marked "Draft: lawyer
+  review needed", noindex and left out of the sitemap. Linked from the footer ("Refunds",
+  "Delivery"), the "Before you pay" section and below the registration form. Terms and Privacy
+  text unchanged.
+
+### Razorpay payment links per class, and prices in rupees
+
+- Class prices are rupees everywhere: ₹ with Indian digit grouping (₹99, ₹1,49,999) on the class
+  list, class page, registration form and emails; the Event data uses priceCurrency INR. The Classes
+  column "Price (USD)" is renamed "Price (INR)" by setup in place (prices untouched). The built-in
+  Razorpay flow now charges INR.
+- New optional Classes column "Payment link (optional)", added by setup at the end. When it holds an
+  https link on rzp.io or razorpay.com (or a subdomain such as pages.razorpay.com) and the price is
+  above 0: the class list and class page show "Pay ₹{price} and register" (new tab,
+  `rel="noopener noreferrer"`), "Seats are limited" instead of a seat count, and on the class page a
+  plain "Before you pay" section (Razorpay's secure page, card details not seen or stored, the
+  refund rule, joining link on the confirmation page, email and WhatsApp, Terms and Privacy links).
+  No registration form is shown and the script refuses registration for that class. Any other link
+  is ignored; checkClasses and Vercel's logs say whether the link is used or ignored and why. The
+  website checks the link again before showing it.
+- Free classes, the registration form, the waiting list and cancel links are unchanged. The Meet
+  link is never shown on the site.
+- 3 new tests with 16 payment-link cases (45 in total).
+
 ### New master class topics and "Who it's for"
 
 - Topics are now exactly: Product, Salesforce and CRM, Zoho, Careers, Agile and software delivery,

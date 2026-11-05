@@ -4,6 +4,8 @@ import { getAllPosts } from '@/lib/blog';
 import { getClasses, isRegistrationOpen } from '@/lib/classes';
 
 // Only real, finished pages. Articles are added automatically from src/content/blog.
+// /refund-and-cancellation and /shipping-and-delivery are left out (and noindex) until the
+// owner confirms a lawyer has approved them.
 const routes = [
   '',
   '/services',

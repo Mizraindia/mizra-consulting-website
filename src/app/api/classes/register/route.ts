@@ -50,7 +50,9 @@ export async function POST(request: NextRequest) {
   const cls = await getClass(check.registration.classId);
   if (cls === null) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
   if (cls === undefined) return NextResponse.json({ ok: false, error: 'closed' }, { status: 404 });
-  if (cls.priceUsd > 0 && !paymentsReady()) {
+  // Paid on an outside Razorpay payment page: the class page links there instead of this form.
+  if (cls.paymentLink) return NextResponse.json({ ok: false, error: 'external_payment' }, { status: 409 });
+  if (cls.priceInr > 0 && !paymentsReady()) {
     return NextResponse.json({ ok: false, error: 'payments_unavailable' }, { status: 409 });
   }
 
@@ -83,6 +85,7 @@ export async function POST(request: NextRequest) {
   const statusCode: Record<string, number> = {
     duplicate: 409,
     full: 409,
+    external_payment: 409,
     closed: 404,
     not_found: 404,
     busy: 503,

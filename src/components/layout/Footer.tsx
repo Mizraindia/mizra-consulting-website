@@ -91,12 +91,18 @@ export default function Footer() {
         <p>
           © {currentYear} {COMPANY.legalName} · CIN {COMPANY.cin} · {ADDRESS_ONE_LINE}
         </p>
-        <div className="flex flex-shrink-0 items-center gap-6">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 md:flex-shrink-0">
           <Link href="/privacy" className={linkClass}>
             Privacy policy
           </Link>
           <Link href="/terms" className={linkClass}>
             Terms
+          </Link>
+          <Link href="/refund-and-cancellation" className={linkClass}>
+            Refunds
+          </Link>
+          <Link href="/shipping-and-delivery" className={linkClass}>
+            Delivery
           </Link>
           <CookieSettingsButton />
         </div>
